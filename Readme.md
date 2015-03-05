@@ -21,12 +21,11 @@ var Forq = require('forq');
 Set up a node module to be your worker For example, './slow_printer' is a node module that would console log after 500ms and look like this:
 
 ```javascript
-// printer.js
+// slow_printer.js
 
 setTimeout(function(){
   console.log('printing slowly');
 }, 500)
-
 ```
 
 ###Batch
