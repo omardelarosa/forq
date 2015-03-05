@@ -4,15 +4,14 @@ Manage forked processes using [Node](http://nodejs.org/) and [Async.js](https://
 [![build status](https://travis-ci.org/omardelarosa/forq.png?branch=master)](https://travis-ci.org/omardelarosa/forq?branch=master)
 
 ## Installation
-```
+```bash
 npm install forq
-
 ```
 
 ## Usage
 Require the 'forq' module at the top of your file:
 
-```
+```javascript
 var Forq = require('forq');
 ```
 
