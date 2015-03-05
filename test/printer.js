@@ -1,2 +1,6 @@
-console.log("running task: ", process.argv[3]);
-process.exit();
+var debug = require('debug')('printer');
+
+setTimeout(function(){
+  // waiting
+  debug('waiting...');
+}, 500);

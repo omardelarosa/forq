@@ -29,9 +29,10 @@ Forq.prototype.run = function () {
     var w = worker;
     return function(done) {
       var f = fork(w.path, w.args);
+      var fork_id = Date.now().toString('16');
+      f.id = fork_id;
       f.hasFinished = false;
       f.on('exit', function(){
-        console.log('finished task:', w.description || self.workers.indexOf(w) );
         f.hasFinished = true;
         done();
       });

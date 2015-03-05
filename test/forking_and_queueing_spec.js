@@ -5,12 +5,15 @@ var batch;
 
 describe('forking and queueing process', function(){
 
+  this.timeout(10000);
+
   before(function(){
     // make workers
     for (var i = 0; i < 10; i ++ ) {
       workers.push({
         path: './test/printer',
-        args: [ '-f', i ]
+        args: [ '-f', i ],
+        description: 'task #'+i
       });
     }
 
@@ -27,18 +30,16 @@ describe('forking and queueing process', function(){
       expect(batch.forks.filter(function(f){ return !f.hasFinished; }), 'unfinished tasks array').to.have.length(0);
       done();
     };
-
     batch.run();
 
   });
 
   it('running the batch again clears prior forks', function (done) {
     batch.queue.drain = function() {
-      expect(batch.forks.length, 'number of forks').to.eq(10)
+      expect(batch.forks.length, 'number of forks').to.eq(10);
       done();
     };
-    batch.clear();
     batch.run();
-  })
+  });
 
 });
