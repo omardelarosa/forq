@@ -1,12 +1,14 @@
 var Forq = require('../index');
 var expect = require('chai').expect;
 var firedEvents = {};
+var debug = require('debug');
+var _ = require('lodash');
 
-describe('forking and queueing process', function(){
+describe('worker pool queue', function(){
 
   this.timeout(10000);
 
-  describe('worker pool processing', function(){
+  describe('queueing', function(){
 
     var workers = [];
     var pool;
@@ -51,7 +53,7 @@ describe('forking and queueing process', function(){
 
   });
 
-  describe('event binding', function(){
+  describe('events', function(){
 
     var workers = [];
 
@@ -67,7 +69,7 @@ describe('forking and queueing process', function(){
 
     });
 
-    it('fires events that are defined in the worker pool options', function(){
+    it('fires events that are defined in the worker pool options', function(done){
       // initialize new pool
       var pool = new Forq({
         workers: workers,
@@ -81,9 +83,35 @@ describe('forking and queueing process', function(){
           }
         }
       });
-
       pool.run();
 
+    });
+
+    it('can use the pool to share data between forks', function (done){
+      
+      var pool = new Forq({
+        workers: workers,
+        drain: function () {
+          debug("pool status", pool.__data.statuses);
+          expect(pool.__data.tempCounter, 'pool temp counter').to.eq(1000);
+          expect(pool.__data.statuses, 'pool status list').to.have.length(10);
+          done();
+        },
+        events: {
+          myCustomEvent: function(data){
+            debug("custom event has fired", data);
+            var statuses = [ 'fine', 'cool', 'hungry', 'bored'];
+            pool.__data.tempCounter += data.temp;
+            pool.__data.statuses.push(_.sample(statuses));
+          }
+        }
+      });
+
+      pool.__data = {};
+      pool.__data.tempCounter = 0;
+      pool.__data.statuses = [];
+
+      pool.run();
     });
 
   });
