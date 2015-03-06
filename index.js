@@ -80,11 +80,10 @@ function Forq (opts) {
   this.workers = this.opts.workers || [];
   this.events = opts.events || {};
 
-  // attach queue;
   var q = async.queue(function(task, done){
     task.action(done);
-  }, this.concurrencyLimit);
-  this.queue = q;
+  }, this.concurrencyLimit); // make queue;
+  this.queue = q; // attach queue to pool
 
   this.forks = [];
   this.data = {};
