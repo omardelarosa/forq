@@ -1,5 +1,6 @@
 # Forq
 [![build status](https://travis-ci.org/omardelarosa/forq.png?branch=master)](https://travis-ci.org/omardelarosa/forq?branch=master) [![npm version](https://img.shields.io/npm/v/forq.svg)](https://img.shields.io/npm/v/forq.svg)
+
 Manage forked processes using [Node](http://nodejs.org/) and [Async.js](https://github.com/caolan/async)
 
 ## Installation

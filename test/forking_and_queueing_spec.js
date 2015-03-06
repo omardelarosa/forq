@@ -1,45 +1,91 @@
 var Forq = require('../index');
-var workers = [];
 var expect = require('chai').expect;
-var batch;
+var firedEvents = {};
 
 describe('forking and queueing process', function(){
 
   this.timeout(10000);
 
-  before(function(){
-    // make workers
-    for (var i = 0; i < 10; i ++ ) {
-      workers.push({
-        path: './test/printer',
-        args: [ '-f', i ],
-        description: 'task #'+i
-      });
-    }
+  describe('worker pool processing', function(){
 
-    // initialize new batch
-    batch = new Forq({
-      workers: workers
+    var workers = [];
+    var pool;
+
+    before(function(){
+      // make workers
+      for (var i = 0; i < 10; i ++ ) {
+        workers.push({
+          path: './test/printer',
+          args: [ '-f', i ],
+          description: 'task #'+i
+        });
+      }
+
+    });
+
+    it('finishes all tasks using worker pool', function (done){
+      // initialize new pool
+      pool = new Forq({
+        workers: workers,
+        drain: function() {
+          expect(pool.forks.filter(function(f){ return !f.terminated; }), 'unfinished tasks array').to.have.length(0);
+          done();
+        }
+      });
+
+      pool.run();
+
+    });
+
+    it('running the pool again clears prior forks', function (done) {
+
+      // redefine drain function from what was initialized
+      pool.queue.drain = function() {
+        expect(pool.forks.length, 'number of forks').to.eq(10);
+        done();
+      };
+
+      pool.run();
+
     });
 
   });
 
-  it('finishes all tasks in batch', function (done){
+  describe('event binding', function(){
 
-    batch.queue.drain = function() {
-      expect(batch.forks.filter(function(f){ return !f.hasFinished; }), 'unfinished tasks array').to.have.length(0);
-      done();
-    };
-    batch.run();
+    var workers = [];
 
-  });
+    before(function(){
+      // make workers
+      for (var i = 0; i < 10; i ++ ) {
+        workers.push({
+          path: './test/printer',
+          args: [ '-f', i ],
+          description: 'task #'+i
+        });
+      }
 
-  it('running the batch again clears prior forks', function (done) {
-    batch.queue.drain = function() {
-      expect(batch.forks.length, 'number of forks').to.eq(10);
-      done();
-    };
-    batch.run();
+    });
+
+    it('fires events that are defined in the worker pool options', function(){
+      // initialize new pool
+      var pool = new Forq({
+        workers: workers,
+        drain: function () {
+          expect(pool.forks.length, 'number of forks').to.eq(10);
+          done();
+        },
+        events: {
+          myCustomEvent: function(){
+            debug("custom event has fired", arguments);
+          }
+        }
+      });
+
+      pool.run();
+
+    });
+
   });
 
 });
