@@ -92,24 +92,27 @@ describe('worker pool queue', function(){
       var pool = new Forq({
         workers: workers,
         drain: function () {
-          debug("pool status", pool.__data.statuses);
-          expect(pool.__data.tempCounter, 'pool temp counter').to.eq(1000);
-          expect(pool.__data.statuses, 'pool status list').to.have.length(10);
+          debug("pool status", this.__data.statuses);
+          expect(this.__data.tempCounter, 'pool temp counter').to.eq(1000);
+          expect(this.__data.statuses, 'pool status list').to.have.length(10);
           done();
+        },
+        oninit: function() {
+          this.__data = {};
+          this.__data.tempCounter = 0;
+          this.__data.statuses = [];
         },
         events: {
           myCustomEvent: function(data){
-            debug("custom event has fired", data);
+            debug("custom event has fired", data, this);
             var statuses = [ 'fine', 'cool', 'hungry', 'bored'];
-            pool.__data.tempCounter += data.temp;
-            pool.__data.statuses.push(_.sample(statuses));
+            this.pool.__data.tempCounter += data.temp;
+            this.pool.__data.statuses.push(_.sample(statuses));
           }
         }
       });
 
-      pool.__data = {};
-      pool.__data.tempCounter = 0;
-      pool.__data.statuses = [];
+      
 
       pool.run();
     });

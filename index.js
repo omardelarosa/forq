@@ -39,7 +39,7 @@ function __attachEventListeners () {
   for (eventName in customEvents) {
     f.addListener('message', function (msg){
       if (msg.event && msg.event === eventName) {
-        customEvents[eventName].call(f, msg.data);
+        customEvents[eventName].apply(f, [ msg.data ]);
       }
     });
   }
@@ -79,7 +79,7 @@ function Forq (opts) {
   this.concurrencyLimit = this.opts.concurrency || DEFAULT_CONCURRENCY;
   this.workers = this.opts.workers || [];
   this.events = opts.events || {};
-
+  this.oninit = opts.oninit ? opts.oninit.bind(this) : function () { return this; };
   var q = async.queue(function(task, done){
     task.action(done);
   }, this.concurrencyLimit); // make queue;
@@ -109,7 +109,6 @@ Forq.prototype.run = function () {
       f.events = self.events || {};
       f.worker = w;
       f.pool = self;
-
       this.f.terminate = function () {
         if (!f.terminated) {
           f.terminated = true;
@@ -135,6 +134,8 @@ Forq.prototype.run = function () {
 
     });
   });
+
+  this.oninit();
 
   return this;
 };
