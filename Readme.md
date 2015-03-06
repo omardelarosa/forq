@@ -103,7 +103,7 @@ Each event's ``this`` is bound to the ``Process`` instance that triggered it.  T
 
 ##Sharing Data Among Workers In a Pool
 Workers can share data by attaching it to the ``pool``.  For example:
-```
+```javascript
 // initialize the worker pool
 var pool = new Forq({
   workers: workers,
