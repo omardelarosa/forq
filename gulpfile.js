@@ -15,3 +15,9 @@ gulp.task('mocha', function () {
 });
 
 gulp.task('test', [ 'lint', 'mocha'] );
+
+gulp.task('default', [ 'test' ]);
+
+gulp.task('watch', function () {
+  gulp.watch(['./test/**/*.js', './index.js'], [ 'test' ]);
+});
