@@ -112,9 +112,110 @@ describe('worker pool queue', function(){
         }
       });
 
-      
+      pool.run();
+    });
+
+  });
+
+  describe('concurrency', function(){
+
+    var workers = [];
+    var NUM_CPUS;
+
+    before(function(){
+      // make workers
+      NUM_CPUS = require('os').cpus().length;
+
+      for (var i = 0; i < (NUM_CPUS*2); i ++ ) {
+        workers.push({
+          path: './test/printer',
+          args: [ '-f', i ],
+          description: 'task #'+i
+        });
+      }
+
+    });
+
+    it('limits the concurrency at the number of cpu cores', function(done){
+
+      var pool = new Forq({
+        workers: workers,
+        concurrency: (NUM_CPUS*2),
+        drain: function () {
+          expect(pool.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
+          done();
+        }
+      });
 
       pool.run();
+
+    });
+
+  });
+
+  describe('error handling', function (){
+
+    var workers = [];
+    var SoftError = Forq.Errors.SoftError;
+    var ForkError = Forq.Errors.ForkError;
+    var errorCounter = 0;
+    
+    before(function(){
+      // make workers
+      for (var i = 0; i < 10; i ++ ) {
+        workers.push({
+          path: i == 7 ? './test/soft_errorer' : './test/errorer',
+          args: [ '-f', i ],
+          description: 'task #'+i,
+          opts: {
+            // silence errors from log
+            silent: true
+          }
+        });
+      }
+
+    });
+
+    it('catches errors that occur in forks', function(done){
+      var pool = new Forq({
+      workers: workers,
+      concurrency: 10,
+      drain: function () {
+          var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
+          expect(errors.length, 'number of forks with errors').to.eq(1);
+          done();
+        }
+      });
+      pool.run();
+    });
+
+    it('raises SoftError and ForkError types', function(done){
+      
+      var poolErrors = [];
+
+      var pool = new Forq({
+        workers: workers,
+        concurrency: 10,
+        drain: function () {
+          var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
+          expect(errors.length, 'number of forks with errors').to.eq(1);
+          expect(poolErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
+          expect(poolErrors.filter(function(e){ return e.constructor === ForkError; }), 'ForkErrors').to.have.length(1);
+          done();
+        },
+        events: {
+          softError: function() {
+            debug("soft error occurred");
+          }
+        }
+      });
+
+      pool.run();
+      
+      pool.on('error', function(err){
+        poolErrors.push(err);
+      });
+    
     });
 
   });
