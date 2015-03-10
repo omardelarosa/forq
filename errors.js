@@ -31,10 +31,10 @@ function ChildProcessSoftError (e, extra) {
 
 function SoftError(e, extra) {
   Error.call(this);
-  Error.captureStackTrace(this, SoftError);
   this.id = e.id;
   this.name = 'SoftError';
   this.message = e.message;
+  this.stack = e.stack;
 }
 
 module.exports = {

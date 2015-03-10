@@ -183,7 +183,7 @@ describe('worker pool queue', function(){
       concurrency: 10,
       drain: function () {
           var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
-          expect(errors.length, 'number of forks with errors').to.eq(1);
+          expect(errors.length, 'number of forks with errors').to.eq(2);
           done();
         }
       });
@@ -199,7 +199,7 @@ describe('worker pool queue', function(){
         concurrency: 10,
         drain: function () {
           var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
-          expect(errors.length, 'number of forks with errors').to.eq(1);
+          expect(errors.length, 'number of forks with errors').to.eq(2);
           expect(poolErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
           expect(poolErrors.filter(function(e){ return e.constructor === ForkError; }), 'ForkErrors').to.have.length(1);
           done();

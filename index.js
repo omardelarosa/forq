@@ -94,7 +94,8 @@ function __attachEventListeners () {
     // soft error handling
     } else if (msg.event && msg.event === 'softError') {
       var er = new Errors.SoftError(msg.data);
-      f.pool.emit('error', er);
+      // emit a normal error event on the fork passing in softError as object
+      f.emit('error', er);
       f.terminate( er );
     }
   });
