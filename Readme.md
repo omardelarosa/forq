@@ -131,3 +131,54 @@ var pool = new Forq({
 // start processing the tasks in the worker pool
 pool.run();
 ```
+
+#Errors
+##Fork-Halting Errors
+Errors will be logged in the respective stderr of their fork and emit an 'error' event to the worker pool.   Errors can be listened for on the pool level:
+
+```javascript
+pool.on('error', function(err){
+  // handle the error somehow
+});
+```
+
+Or they can be listened for on the workers themselves using the following namespace:
+```
+var workers = [
+  {
+    path: './worker_module',
+    description: 'worker b',
+    // set the worker name here
+    id: 'worker_a'
+  },
+  path: './worker_module',
+    description: 'worker a',
+    // set the worker name here
+    id: 'worker_b'
+  }
+];
+
+var pool = new Forq({
+  workers: workers,
+  concurrency: 10,
+  drain: function () {
+    // all done!
+  }
+});
+
+pool.on('workerError:worker_a', function(err){
+  // handle the error for just worker1 somehow
+});
+```
+
+###.errors
+Each worker pool has an array of arrays called ``.errors`` containing errors raised by their respective worker's forks.
+
+###Forq.Errors
+The Forq module includes a few Error constructors that can be used for 
+
+#Changelog
+##0.0.2
+- Now using native Node Domain for worker pool management
+- Improved Error handling
+- Added Worker Error namespacing support

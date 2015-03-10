@@ -4,6 +4,9 @@ var firedEvents = {};
 var debug = require('debug');
 var _ = require('lodash');
 
+var SoftError = Forq.Errors.SoftError;
+var ForkError = Forq.Errors.ForkError;
+
 describe('worker pool queue', function(){
 
   this.timeout(10000);
@@ -156,8 +159,6 @@ describe('worker pool queue', function(){
   describe('error handling', function (){
 
     var workers = [];
-    var SoftError = Forq.Errors.SoftError;
-    var ForkError = Forq.Errors.ForkError;
     var errorCounter = 0;
     
     before(function(){
@@ -216,6 +217,67 @@ describe('worker pool queue', function(){
         poolErrors.push(err);
       });
     
+    });
+
+  });
+
+  describe('error namespacing', function(){
+    var workers = [];
+
+    before(function(){
+      // make workers
+      workers.push({
+        path: './test/errorer',
+        args: [ '-f', 5 ],
+        id: 'important_error_prone_worker',
+        description: 'task #1',
+        opts: {
+          // silence errors from log
+          silent: true
+        }
+      });
+
+      workers.push({
+        path: './test/errorer',
+        args: [ '-f', 5 ],
+        id: 'unimportant_error_prone_worker',
+        description: 'task #2',
+        opts: {
+          // silence errors from log
+          silent: true
+        }
+      });
+
+      workers.push({
+        path: './test/printer',
+        args: [ '-f', 3 ],
+        id: 'normal_worker',
+        description: 'task #3',
+        opts: {
+          // silence errors from log
+          silent: true
+        }
+      });
+
+    });
+
+    it('emits errors using a namespace', function(done){
+      var importantError;
+      var pool = new Forq({
+        workers: workers,
+        concurrency: 10,
+        drain: function () {
+          expect(importantError, 'an important error').to.be.an.instanceOf(ForkError);
+          done();
+        }
+      });
+
+      pool.run();
+
+      pool.on('workerError:important_error_prone_worker', function(err){
+        importantError = err;
+      });
+
     });
 
   });

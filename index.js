@@ -58,7 +58,7 @@ function __attachEventListeners () {
   f.addListener('exit', function(code, err){
     var errorObj, d;
     if (code !== 0) {
-      errorObj = new Errors.ForkError('fork "'+f.id+'" threw an error');
+      errorObj = new Errors.ForkError('fork "'+f.id+'" threw an error with code '+code);
       f.emit('error', errorObj);
       // emit a general worker error
       f.pool.emit('workerError', errorObj );
