@@ -1,6 +1,6 @@
 {
   "name": "forq",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "manage forked processes using async.queue",
   "main": "index.js",
   "scripts": {

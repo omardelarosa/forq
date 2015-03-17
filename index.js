@@ -105,7 +105,7 @@ function __attachEventListeners () {
 
 function __assignForkId () {
   var w = this.worker;
-  function hid(){ return Date.now().toString('16'); }
+  function hid(){ return Date.now().toString('16').slice(2); }
   var id = w.id ? w.id : hid();
 
   if (!this.pool.forksHash[id]) {
