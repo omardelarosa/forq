@@ -263,7 +263,7 @@ Forq.prototype.run = function () {
 
   // store domain errors
   d.on('error', function (er) {
-    if ( self.errors[er.domainEmitter.id] ) {
+    if ( er.domainEmitter && self.errors[er.domainEmitter.id] ) {
       self.errors[er.domainEmitter.id].push(er);
       self.emit('error', er);
     }
