@@ -145,7 +145,7 @@ pool.on('error', function(err){
 ```
 
 Or they can be listened for on the workers themselves using the following namespace:
-```
+```javascript
 var workers = [
   {
     path: './worker_module',
