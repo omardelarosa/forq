@@ -157,12 +157,12 @@ function Forq (opts) {
 
   this.__onfinish = (function(res) {
     debug('finished closing all active forks in pool');
-    if (self.opts.onfinished && self.opts.onfinished.constructor === Function) {
-      self.opts.onfinished.call(self, res);
+    if (this.opts.onfinished && this.opts.onfinished.constructor === Function) {
+      this.opts.onfinished.call(this, res);
     }
   }).bind(this);
 
-  this.on('finished', this.__onfinish);
+  this.addListener('finished', this.__onfinish);
 
 }
 
