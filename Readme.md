@@ -61,14 +61,15 @@ pool.run();
 ```
 
 ###Callbacks
-Before running, you may also set an optional callback to fire when the queue has been drained:
+Before running, you may also set an optional callback to fire when the pool has drained:
 
 ```javascript
 pool.queue.drain = function() {
-  console.log("All done!");
+  console.log("Queue is drained!");
 };
 pool.run();
 ```
+However, note that there may still be active forks running.  To wait until all forks have finished, use the ``onfinished`` option on Forq initialization.
 
 ##Events
 Communication with each fork can be done through events, as would any child process.
@@ -79,9 +80,10 @@ These events can be bound on the ``events`` key on pool initialization.
 ```javascript
 var pool = new Forq({
   workers: workers,
-  drain: function () {
-   // stuff to do when worker pool finishes all tasks
+  onfinished: function () {
+   // stuff to do when worker pool finishes all tasks and there are no active forks
   },
+  // worker events to listen for and react to
   events: {
     exit: function(code, err) {
       // stuff to do on process exit
@@ -107,7 +109,7 @@ Workers can share data by attaching it to the ``pool``.  For example:
 // initialize the worker pool
 var pool = new Forq({
   workers: workers,
-  drain: function () {
+  onfinished: function () {
     // check updated values
     console.log(this.__data.tempCounter);
     console.log(this.__data.statuses)
@@ -161,7 +163,7 @@ var workers = [
 var pool = new Forq({
   workers: workers,
   concurrency: 10,
-  drain: function () {
+  onfinish: function () {
     // all done!
   }
 });
@@ -178,7 +180,13 @@ Each worker pool has an array of arrays called ``.errors`` containing errors rai
 The Forq module includes a few Error constructors that can be used for 
 
 #Changelog
+
 ##0.0.2
 - Now using native Node Domain for worker pool management
 - Improved Error handling
 - Added Worker Error namespacing support
+
+##0.0.3
+- Added monitoring for active forks and handling for stale/hanging forks.
+- Added killTimeout options for pools and forks
+- Added 'onfinished' option to use in place of queue.drain
