@@ -173,10 +173,10 @@ pool.on('workerError:worker_a', function(err){
 });
 ```
 
-###.errors
+``.errors``
 Each worker pool has an array of arrays called ``.errors`` containing errors raised by their respective worker's forks.
 
-###Forq.Errors
+``Forq.Errors``
 The Forq module includes a few Error constructors that can be used for 
 
 #Changelog
