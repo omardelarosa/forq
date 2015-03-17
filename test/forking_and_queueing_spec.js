@@ -32,8 +32,8 @@ describe('worker pool queue', function(){
       // initialize new pool
       pool = new Forq({
         workers: workers,
-        drain: function() {
-          expect(pool.forks.filter(function(f){ return !f.terminated; }), 'unfinished tasks array').to.have.length(0);
+        onfinished: function() {
+          expect(this.forks.filter(function(f){ return !f.terminated; }), 'unfinished tasks array').to.have.length(0);
           done();
         }
       });
@@ -76,7 +76,7 @@ describe('worker pool queue', function(){
       // initialize new pool
       var pool = new Forq({
         workers: workers,
-        drain: function () {
+        onfinished: function () {
           expect(pool.forks.length, 'number of forks').to.eq(10);
           done();
         },
@@ -94,7 +94,7 @@ describe('worker pool queue', function(){
       
       var pool = new Forq({
         workers: workers,
-        drain: function () {
+        onfinished: function () {
           debug("pool status", this.__data.statuses);
           expect(this.__data.tempCounter, 'pool temp counter').to.eq(1000);
           expect(this.__data.statuses, 'pool status list').to.have.length(10);
@@ -144,7 +144,7 @@ describe('worker pool queue', function(){
       var pool = new Forq({
         workers: workers,
         concurrency: (NUM_CPUS*2),
-        drain: function () {
+        onfinished: function () {
           expect(pool.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
           done();
         }
@@ -181,7 +181,7 @@ describe('worker pool queue', function(){
       var pool = new Forq({
       workers: workers,
       concurrency: 10,
-      drain: function () {
+      onfinished: function () {
           var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
           expect(errors.length, 'number of forks with errors').to.eq(2);
           done();
@@ -197,7 +197,7 @@ describe('worker pool queue', function(){
       var pool = new Forq({
         workers: workers,
         concurrency: 10,
-        drain: function () {
+        onfinished: function () {
           var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
           expect(errors.length, 'number of forks with errors').to.eq(2);
           expect(poolErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
@@ -262,23 +262,108 @@ describe('worker pool queue', function(){
     });
 
     it('emits errors using a namespace', function(done){
-      var importantError;
+
+      var pool = new Forq({
+        workers: workers,
+        concurrency: 10
+      });
+
+      pool.run();
+
+      pool.on('workerError:important_error_prone_worker', function(err){
+        expect(err, 'an important error').to.be.an.instanceOf(ForkError);
+        done();
+      });
+
+    });
+
+  });
+
+  describe('kill timeout for workers', function() {
+
+    var workers = [];
+    var killTimeout = 5000;
+    var bufferTime = 300;
+    this.timeout(30000);
+
+    before(function(){
+      // make workers
+
+      workers.push({
+        path: './test/slow_worker',
+        args: [ '-f', 1 ],
+        id: 'slow_worker',
+        description: 'task #1',
+        opts: {
+          // silence errors from log
+          silent: true
+        },
+        killTimeout: killTimeout
+      });
+
+    });
+
+    it("should terminate forks once they exceed their worker timeout", function(done) {
+      var start = Date.now();
+      var end;
+
       var pool = new Forq({
         workers: workers,
         concurrency: 10,
-        drain: function () {
-          expect(importantError, 'an important error').to.be.an.instanceOf(ForkError);
+        onfinished: function () {
+          end = Date.now();
+          expect(end-start).to.be.lt(killTimeout+bufferTime);
           done();
         }
       });
 
       pool.run();
 
-      pool.on('workerError:important_error_prone_worker', function(err){
-        importantError = err;
+    });
+
+  });
+
+    describe('kill timeout for pools', function() {
+
+      var workers = [];
+      var killTimeout = 10000;
+      var bufferTime = 300;
+      this.timeout(30000);
+
+      before(function(){
+        // make workers
+
+        workers.push({
+          path: './test/slow_worker',
+          args: [ '-f', 1 ],
+          id: 'slow_worker',
+          description: 'task #1',
+          opts: {
+            // silence errors from log
+            silent: true
+          }
+        });
+
       });
 
-    });
+      it("should terminate pools once they exceed their pool timeout", function(done) {
+        var start = Date.now();
+        var end;
+
+        var pool = new Forq({
+          workers: workers,
+          concurrency: 10,
+          onfinished: function () {
+            end = Date.now();
+            expect(end-start).to.be.lt(killTimeout+bufferTime);
+            done();
+          },
+          killTimeout: killTimeout
+        });
+
+        pool.run();
+
+      });
 
   });
 

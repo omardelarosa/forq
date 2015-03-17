@@ -15,6 +15,8 @@ var NUM_CPUS = os.cpus().length;
 var DEFAULT_WORKER_OPTIONS = {
   stdio: [0, 0, 'pipe' ]
 };
+var DEFAULT_TIMEOUT = 60000;
+var DEFAULT_POLLING_FREQUENCY = 1000;
 
 function __attachEventListeners () {
 
@@ -119,15 +121,18 @@ function __assignForkId () {
 function Forq (opts) {
   if (!opts) { opts = {}; }
   var self = this;
+
   this.opts = opts;
   this.concurrencyLimit = this.opts.concurrency || DEFAULT_CONCURRENCY;
   this.domain = d;
+  this.killTimeout = opts.killTimeout || DEFAULT_TIMEOUT;
+  this.pollFrequency = opts.pollFrequency || DEFAULT_POLLING_FREQUENCY;
   // cap concurrency at the number of CPUS
   if (this.concurrencyLimit > NUM_CPUS) {
     debug('warning: concurrency will be limited at the number of CPU cores of '+NUM_CPUS);
     this.concurrencyLimit = NUM_CPUS;
   }
-
+  this.startTime = Date.now();
   this.workers = this.opts.workers || [];
   this.events = opts.events || {};
   this.oninit = opts.oninit ? opts.oninit.bind(this) : function () { return this; };
@@ -139,23 +144,73 @@ function Forq (opts) {
   this.forksHash = {};
   this.forks = [];
   this.data = {};
-  this.queue.drain = this.opts.drain ? this.opts.drain.bind(self, self) : (function() {
-    debug("finished all tasks!");
-  }).bind(self, self);
+
+  // start pool timer
+  this.__setPoolTimer();
+
+  this.queue.drain = (function(res) {
+    debug("finished all tasks and calling drain");
+    if (this.opts.drain && this.opts.drain.constructor === Function) {
+      this.opts.drain.call(this, pool);
+    }
+  }).bind(this);
+
+  this.__onfinish = (function(res) {
+    debug('finished closing all active forks in pool');
+    if (self.opts.onfinished && self.opts.onfinished.constructor === Function) {
+      self.opts.onfinished.call(self, res);
+    }
+  }).bind(this);
+
+  this.on('finished', this.__onfinish);
 
 }
 
 // inherit from EventEmitter
 util.inherits(Forq, EventEmitter);
 
+Forq.prototype.__setPoolTimer = function () {
+  var self = this;
+  this.timer = setInterval(function(){
+    var currentTime = Date.now();
+    debug("currently active forks in pool", self.getNumberOfActiveForks() );
+    debug("start time", self.startTime);
+    debug("current time", currentTime);
+    debug("timeout", self.killTimeout);
+    if (self.getNumberOfActiveForks() === 0) {
+      clearInterval(self.timer);
+      self.emit('finished', { status: 'completed' });
+    } else if (currentTime - self.startTime > self.killTimeout) {
+      clearInterval(self.timer);
+      self.killAll();
+      self.emit('finished', { status: 'aborted' });
+    }
+  }, self.pollFrequency);
+};
+
+Forq.prototype.getNumberOfActiveForks = function() {
+  if ( this.forks && this.forks.length > 0 ) {
+    return this.forks.filter(function(f){ return !f.terminated; }).length;
+  }
+};
+
 Forq.prototype.run = function () {
   var self = this;
-  this.clear(); // clear any existing forks
+  this.killAll(); // kill any existing forks
 
   function startFork(worker) {
     var w = worker;
     var ctx = this;
     return function(done) {
+
+      // kill timeout
+      function startTimeout (f, w) {
+        return setTimeout(function(){
+          f.kill();
+          f.terminate(new Errors.ForkError('Fork timed out'));
+        }, w.killTimeout || DEFAULT_TIMEOUT);
+      }
+
       var fork_args = [w.path, w.args];
       if (w.opts) {
         fork_args.push(w.opts);
@@ -164,6 +219,9 @@ Forq.prototype.run = function () {
         fork_args.push(DEFAULT_WORKER_OPTIONS);
       }
       var f = fork.apply(this, fork_args);
+
+      f.timer = startTimeout(f, w);
+
       // attach worker to fork
       f.worker = w;
 
@@ -178,6 +236,7 @@ Forq.prototype.run = function () {
 
       this.f.terminate = function (err) {
         var e = err ? err : null;
+        clearTimeout(f.timer);
         if (!f.terminated) {
           f.terminated = true;
           if (f.cb) { f.cb(e); }
@@ -217,8 +276,7 @@ Forq.prototype.run = function () {
     }, function(err){
       // log errors processing forks
       if (err) {
-        // TODO: listen for these errors in a stable way
-        // self.emit('error', new Errors.SoftError(err, err) );
+        // TODO: listen and broadcast for these errors in a stable way
       }
     });
   });
@@ -228,8 +286,12 @@ Forq.prototype.run = function () {
   return this;
 };
 
-Forq.prototype.clear = function () {
+Forq.prototype.killAll = function () {
   if (this.forks) {
+    if (this.forks.length > 0) {
+      // send a kill signal and terminate each
+      this.forks.forEach(function(f){ f.kill(); f.terminate(); });
+    }
     this.forks = [];
     this.forksHash = {};
   }
