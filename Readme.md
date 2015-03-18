@@ -94,7 +94,24 @@ var pool = new Forq({
   }
 });
 ```
+###Default Events
+By default, workers and pools emit a variety of events:
+####Pool Events
+ Event Name  | Parameters Sent to Handler |  Notes
+-----------  | -------------------------- | --------
+``finished`` |  -> ( { status:  '...' } ) | possible statuses: 'completed', 'aborted'
+``error``    |  -> ( err )                | see the errors.js module for different error types
+``workerError``| -> (err)                 | when any worker fires an error
+````workerError:{idOfWorker}`` | -> (err) | when an specific worker with specified id fires an error
 
+####Worker Events
+ Event Name  | Parameters Sent to Handler |  Notes
+-----------  | -------------------------- | --------
+``finished`` |  -> ( {} )                 | empty object
+``error``    |  -> ( err )                | see the errors.js module for different error types
+
+
+###Custom Events
 Each custom event can be fired from within a worker child process by passing an object with ``data`` and ``event`` keys to the ``process.send`` method:
 ```javascript
 // my_worker.js
@@ -134,8 +151,8 @@ var pool = new Forq({
 pool.run();
 ```
 
-#Errors
-##Fork-Halting Errors
+##Errors
+###Fork-Halting Errors
 Errors will be logged in the respective stderr of their fork and emit an 'error' event to the worker pool.   Errors can be listened for on the pool level:
 
 ```javascript
@@ -178,6 +195,35 @@ Each worker pool has an array of arrays called ``.errors`` containing errors rai
 
 ``Forq.Errors``
 The Forq module includes a few Error constructors that can be used for 
+
+##Timeouts
+
+Both workers and worker pools can have timeouts set ``killTimeout`` attribute upon their initialization.  There is also a ``pollFrequency`` value which can be used to adjust how often the main process checks for timeouts
+
+###Pool Timeout
+```javascript
+var pool = new Forq({
+  workers: workers,
+  concurrency: 10,
+  // set a 10 second timeout for the pool
+  killTimeout: 10000,
+  // poll frequency of 1 second
+  pollFrequency: 1000
+});
+```
+###Worker Timeout
+```javascript
+var workers = []
+workers.push({
+  path: './test/slow_worker',
+  args: [ ],
+  id: 'slow_worker',
+  // a 10 second timeout on the worker
+  killTimeout: 10000,
+    // poll frequency of 1 second
+  pollFrequency: 1000
+});
+```
 
 #Changelog
 
