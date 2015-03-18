@@ -253,3 +253,6 @@ workers.push({
 - Added monitoring for active forks and handling for stale/hanging forks.
 - Added killTimeout options for pools and forks
 - Added 'onfinished' option to use in place of queue.drain
+
+##0.0.4
+- Readme updates and minor improvements to index.js
