@@ -117,6 +117,19 @@ function __assignForkId () {
   }
 }
 
+function __setForkTimer (f) {
+  return setInterval(function(){
+    var currentTime = Date.now();
+    if (currentTime - f.startTime > f.killTimeout) {
+      clearInterval(f.timer);
+      f.terminate(new Error('Time out'));
+      if (f.connected && f.kill) {
+        f.kill();
+      }
+    }
+  }, f.pollFrequency || DEFAULT_POLLING_FREQUENCY );
+}
+
 // initialization
 function Forq (opts) {
   if (!opts) { opts = {}; }
@@ -174,9 +187,6 @@ Forq.prototype.__setPoolTimer = function () {
   this.timer = setInterval(function(){
     var currentTime = Date.now();
     debug("currently active forks in pool", self.getNumberOfActiveForks() );
-    debug("start time", self.startTime);
-    debug("current time", currentTime);
-    debug("timeout", self.killTimeout);
     if (self.getNumberOfActiveForks() === 0) {
       clearInterval(self.timer);
       self.emit('finished', { status: 'completed' });
@@ -203,18 +213,19 @@ Forq.prototype.run = function () {
     var ctx = this;
     return function(done) {
 
-      // kill timeout
-      function startTimeout (f, w) {
-        var ms = w.killTimeout || DEFAULT_TIMEOUT;
-        return setTimeout(function(){
-          if (f.connected && f.kill) {
-            f.kill();
-          }
-          f.terminate(new Error('Fork timed out'));
-        }, ms);
+      function terminate (err) {
+        var e = err ? err : null;
+        clearInterval(this.timer);
+        if (!this.terminated) {
+          debug('terminated worker '+this.id)
+          this.terminated = true;
+          if (this.connected) { this.emit('terminated'); }
+          if (this.cb) { this.cb(e); }
+        }
       }
 
       var fork_args = [w.path, w.args];
+
       if (w.opts) {
         fork_args.push(w.opts);
       } else {
@@ -223,28 +234,27 @@ Forq.prototype.run = function () {
       }
       var f = fork.apply(this, fork_args);
 
-      f.timer = startTimeout.call(this, f, w);
-
       // attach worker to fork
       f.worker = w;
+      
+      f.killTimeout = w.killTimeout || DEFAULT_TIMEOUT;
+      f.pollFrequency = w.pollFrequency || DEFAULT_POLLING_FREQUENCY;
 
       this.f = f;
       f.cb = done;
       f.events = self.events || {};
+
+      f.startTime = Date.now();
       
       f.pool = self;
 
       // add fork to the domain
       d.add(f);
 
-      this.f.terminate = (function (err) {
-        var e = err ? err : null;
-        clearTimeout(this.timer);
-        if (!this.terminated) {
-          this.terminated = true;
-          if (this.cb) { this.cb(e); }
-        }
-      }).bind(this.f);
+      f.terminate = terminate.bind(f);
+
+      // f.timer = startTimeout.call(this, f, w);
+      f.timer = __setForkTimer(f);
 
       // assign event handlers
       __attachEventListeners.apply(f);
@@ -252,6 +262,7 @@ Forq.prototype.run = function () {
       // assign fork id
       __assignForkId.apply(f);
 
+      f.terminated = false;
       f.hasFinished = false;
       
       // add to forks hash

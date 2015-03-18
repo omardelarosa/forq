@@ -310,12 +310,14 @@ describe('worker pool queue', function(){
       var pool = new Forq({
         workers: workers,
         concurrency: 10,
-        onfinished: function () {
-          end = Date.now();
-          expect(end-start).to.be.lt(killTimeout+bufferTime);
-          done();
-        },
-        killTimeout: 10000
+        killTimeout: 10000,
+        events: {
+          "terminated": function () {
+            end = Date.now();
+            expect(end-start).to.be.lt(killTimeout+bufferTime);
+            done();
+          }
+        }
       });
 
       pool.run();
