@@ -162,7 +162,7 @@ function Forq (opts) {
     }
   }).bind(this);
 
-  this.addListener('finished', this.__onfinish);
+  this.on('finished', this.__onfinish);
 
 }
 
@@ -205,10 +205,13 @@ Forq.prototype.run = function () {
 
       // kill timeout
       function startTimeout (f, w) {
+        var ms = w.killTimeout || DEFAULT_TIMEOUT;
         return setTimeout(function(){
-          f.kill();
-          f.terminate(new Errors.ForkError('Fork timed out'));
-        }, w.killTimeout || DEFAULT_TIMEOUT);
+          if (f.connected && f.kill) {
+            f.kill();
+          }
+          f.terminate(new Error('Fork timed out'));
+        }, ms);
       }
 
       var fork_args = [w.path, w.args];
@@ -220,7 +223,7 @@ Forq.prototype.run = function () {
       }
       var f = fork.apply(this, fork_args);
 
-      f.timer = startTimeout(f, w);
+      f.timer = startTimeout.call(this, f, w);
 
       // attach worker to fork
       f.worker = w;
@@ -234,14 +237,14 @@ Forq.prototype.run = function () {
       // add fork to the domain
       d.add(f);
 
-      this.f.terminate = function (err) {
+      this.f.terminate = (function (err) {
         var e = err ? err : null;
-        clearTimeout(f.timer);
-        if (!f.terminated) {
-          f.terminated = true;
-          if (f.cb) { f.cb(e); }
+        clearTimeout(this.timer);
+        if (!this.terminated) {
+          this.terminated = true;
+          if (this.cb) { this.cb(e); }
         }
-      };
+      }).bind(this.f);
 
       // assign event handlers
       __attachEventListeners.apply(f);
@@ -267,7 +270,6 @@ Forq.prototype.run = function () {
       self.errors[er.domainEmitter.id].push(er);
       self.emit('error', er);
     }
-    
   });
 
   this.workers.forEach(function(w){

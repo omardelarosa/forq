@@ -314,7 +314,8 @@ describe('worker pool queue', function(){
           end = Date.now();
           expect(end-start).to.be.lt(killTimeout+bufferTime);
           done();
-        }
+        },
+        killTimeout: 10000
       });
 
       pool.run();
@@ -323,7 +324,7 @@ describe('worker pool queue', function(){
 
   });
 
-    describe('kill timeout for pools', function() {
+    describe('kills timeout for pools', function() {
 
       var workers = [];
       var killTimeout = 10000;
