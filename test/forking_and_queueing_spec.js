@@ -329,7 +329,7 @@ describe('worker pool queue', function(){
     describe('kills timeout for pools', function() {
 
       var workers = [];
-      var killTimeout = 10000;
+      var killTimeout = 5000;
       var bufferTime = 300;
       this.timeout(30000);
 

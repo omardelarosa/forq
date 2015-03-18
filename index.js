@@ -194,6 +194,8 @@ Forq.prototype.__setPoolTimer = function () {
       clearInterval(self.timer);
       self.killAll();
       self.emit('finished', { status: 'aborted' });
+    } else {
+      debug('pool is waiting for forks to terminate');
     }
   }, self.pollFrequency);
 };
@@ -217,7 +219,7 @@ Forq.prototype.run = function () {
         var e = err ? err : null;
         clearInterval(this.timer);
         if (!this.terminated) {
-          debug('terminated worker '+this.id)
+          debug('terminated worker '+this.id);
           this.terminated = true;
           if (this.connected) { this.emit('terminated'); }
           if (this.cb) { this.cb(e); }
@@ -232,28 +234,40 @@ Forq.prototype.run = function () {
         // use default worker options
         fork_args.push(DEFAULT_WORKER_OPTIONS);
       }
+
+      // create the forked process
       var f = fork.apply(this, fork_args);
+
+      // access fork object from context
+      this.f = f;
+
+      // store start time of fork
+      f.startTime = Date.now();
+
+      // access pool from fork
+      f.pool = self;
 
       // attach worker to fork
       f.worker = w;
       
+      // set killTimeout of fork
       f.killTimeout = w.killTimeout || DEFAULT_TIMEOUT;
+
       f.pollFrequency = w.pollFrequency || DEFAULT_POLLING_FREQUENCY;
 
-      this.f = f;
+      // store callback
       f.cb = done;
-      f.events = self.events || {};
 
-      f.startTime = Date.now();
-      
-      f.pool = self;
+      // store events from pool
+      f.events = self.events || {};
 
       // add fork to the domain
       d.add(f);
 
+      // set terminate method
       f.terminate = terminate.bind(f);
 
-      // f.timer = startTimeout.call(this, f, w);
+      // set timer for timeouts, etc.
       f.timer = __setForkTimer(f);
 
       // assign event handlers
@@ -267,8 +281,10 @@ Forq.prototype.run = function () {
       
       // add to forks hash
       self.forksHash[f.id] = f;
-      // 
+      
+      // create empty array to hold errors for this fork
       self.errors[f.id] = [];
+
       // add to forks array
       self.forks.push(f);
 
@@ -303,7 +319,12 @@ Forq.prototype.killAll = function () {
   if (this.forks) {
     if (this.forks.length > 0) {
       // send a kill signal and terminate each
-      this.forks.forEach(function(f){ f.kill(); f.terminate(); });
+      this.forks.forEach(function(f){ 
+        if (f.connected && f.kill) {
+          f.kill(); 
+        }
+        f.terminate(); 
+      });
     }
     this.forks = [];
     this.forksHash = {};
