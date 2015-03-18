@@ -27,22 +27,30 @@ setTimeout(function(){
 ```
 
 ###Pool
-Setup a pool of workers that reference one or more node module:
+Setup an array of workers that reference one or more node module:
 
 ```javascript
 // make workers
-for (var i = 0; i < 10; i ++ ) {
-  workers.push({
-    path: './slow_printer',
-    // you can specify arguments as an array here
-    args: [ '-f', i ],
-    description: 'task #'+i
-  });
-}
+var workers = [];
+
+workers.push({
+  path: './slow_printer',
+  // you can specify arguments as an array here
+  args: [ '-f', 'yo' ],
+  description: 'task #1'
+});
+
+workers.push({
+  path: './fast_printer',
+  // you can specify arguments as an array here
+  args: [ '-f', 'blah'],
+  description: 'task #2'
+});
+
 ```
 
 ###Initialization
-Initialize your new pool with the workers
+Initialize your new worker pool with the array of workers
 
 ```javascript
 // initialize new pool
@@ -54,25 +62,31 @@ var pool = new Forq({
 ```
 
 ###Running
-Run all the tasks in your pool:
+Run all the workers in the array passed into your worker pool:
 
 ```javascript
 pool.run();
 ```
 
 ###Callbacks
-Before running, you may also set an optional callback to fire when the pool has drained:
+You may also set an optional callback to fire when the pool has been notified that all worker forks have terminated:
 
 ```javascript
-pool.queue.drain = function() {
-  console.log("Queue is drained!");
-};
-pool.run();
+// initialize new pool
+var pool = new Forq({
+  workers: workers,
+  // set your desired concurrency
+  concurrency: 4,
+  // optional callback
+  onfinished: function() {
+    console.log("Queue is drained!");
+  };
+});
 ```
-However, note that there may still be active forks running.  To wait until all forks have finished, use the ``onfinished`` option on Forq initialization.
+This call back fires when all forks have terminated.
 
 ##Events
-Communication with each fork can be done through events, as would any child process.
+Communication with each fork can be done through events.
 
 ###Binding
 These events can be bound on the ``events`` key on pool initialization.
@@ -102,7 +116,7 @@ By default, workers and pools emit a variety of events:
 ``finished`` |  -> ( { status:  '...' } ) | possible statuses: 'completed', 'aborted'
 ``error``    |  -> ( err )                | see the errors.js module for different error types
 ``workerError``| -> (err)                 | when any worker fires an error
-````workerError:{idOfWorker}`` | -> (err) | when an specific worker with specified id fires an error
+``workerError:{idOfWorker}`` | -> (err) | when an specific worker with specified id fires an error
 
 ####Worker Events
  Event Name  | Parameters Sent to Handler |  Notes
