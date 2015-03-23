@@ -78,8 +78,7 @@ Then just use the ``.addTask`` method to add it to the worker pool
 
 ```javascript
 var pool = new Forq({
-  workers: tasks,
-  concurrency: 10,
+  workers: workers,
   onfinished: function () {
     
     // waiting to add another task
@@ -88,8 +87,7 @@ var pool = new Forq({
       // adding another task
       pool.addTask(new Task({
         path: './test/printer',
-        args: [ '-f', 10 ],
-        description: 'task #10'
+        description: 'a later task'
       }, pool ));
     
     }, 1000);
@@ -105,7 +103,6 @@ Tasks also accept callbacks:
 ```javascript
 var pool = new Forq({
   workers: tasks,
-  concurrency: 10,
   onfinished: function () {
     
     // waiting to add another task
@@ -114,8 +111,7 @@ var pool = new Forq({
       // adding another task
       pool.addTask(new Task({
         path: './test/printer',
-        args: [ '-f', 10 ],
-        description: 'task #10'
+        description: 'a later task'
       }, pool, 
 
       // this is a callback that fires when the task has been processed
