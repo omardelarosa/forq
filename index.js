@@ -26,6 +26,8 @@ function Forq (opts) {
   this.domain = d;
   this.killTimeout = opts.killTimeout || DEFAULT_TIMEOUT;
   this.pollFrequency = opts.pollFrequency || DEFAULT_POLLING_FREQUENCY;
+  this.setMaxListeners(Infinity);
+  d.setMaxListeners(Infinity);
   // cap concurrency at the number of CPUS
   if (this.concurrencyLimit > NUM_CPUS) {
     debug('warning: concurrency will be limited at the number of CPU cores of '+NUM_CPUS);
