@@ -171,8 +171,10 @@ var pool = new Forq({
   }
 });
 ```
+
 ###Default Events
 By default, workers and pools emit a variety of events:
+
 ####Pool Events
  Event Name  | Parameters Sent to Handler |  Notes
 -----------  | -------------------------- | --------
