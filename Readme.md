@@ -71,11 +71,12 @@ pool.run();
 ###Tasks
 After a worker pool has been initialized, additional work can be added as a ``Task``.  To use a task, first require the ``Task`` constructor:
 
-```
+```javascript
 var Task = require('fork/task');
 ```
 Then just use the ``.addTask`` method to add it to the worker pool
-```
+
+```javascript
 var pool = new Forq({
   workers: tasks,
   concurrency: 10,
@@ -101,7 +102,7 @@ pool.run();
 
 Tasks also accept callbacks:
 
-```
+```javascript
 var pool = new Forq({
   workers: tasks,
   concurrency: 10,
