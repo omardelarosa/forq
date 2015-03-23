@@ -102,7 +102,7 @@ Tasks also accept callbacks:
 
 ```javascript
 var pool = new Forq({
-  workers: tasks,
+  workers: workers,
   onfinished: function () {
     
     // waiting to add another task
