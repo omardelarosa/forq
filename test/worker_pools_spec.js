@@ -3,7 +3,7 @@ var expect = require('chai').expect;
 var firedEvents = {};
 var debug = require('debug');
 var _ = require('lodash');
-
+var Task = require('../task');
 var SoftError = Forq.Errors.SoftError;
 var ForkError = Forq.Errors.ForkError;
 
@@ -46,8 +46,10 @@ describe('Forq Worker Pools', function(){
 
       // redefine drain function from what was initialized
       pool.queue.drain = function() {
-        expect(pool.forks.length, 'number of forks').to.eq(10);
-        done();
+        try {
+          expect(pool.forks.length, 'number of forks').to.eq(10);
+          done();
+        } catch (e) { done(e); } 
       };
 
       pool.run();
@@ -96,9 +98,13 @@ describe('Forq Worker Pools', function(){
         workers: workers,
         onfinished: function () {
           debug("pool status", this.__data.statuses);
-          expect(this.__data.tempCounter, 'pool temp counter').to.eq(1000);
-          expect(this.__data.statuses, 'pool status list').to.have.length(10);
-          done();
+          try {
+            expect(this.__data.tempCounter, 'pool temp counter').to.eq(1000);
+            expect(this.__data.statuses, 'pool status list').to.have.length(10);
+            done();
+          } catch (e) {
+            done(e);
+          }
         },
         oninit: function() {
           this.__data = {};
@@ -147,6 +153,79 @@ describe('Forq Worker Pools', function(){
         onfinished: function () {
           expect(pool.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
           done();
+        }
+      });
+
+      pool.run();
+
+    });
+
+  });
+
+  describe('adding tasks', function(){
+
+    var tasks = [];
+
+    before(function(){
+      // make tasks
+
+      for (var i = 0; i < 10; i ++ ) {
+        tasks.push({
+          path: './test/printer',
+          args: [ '-f', i ],
+          description: 'task #'+i
+        });
+      }
+
+    });
+
+    it('allows tasks to be added to the queue in progress', function (done) {
+
+      var pool = new Forq({
+        workers: tasks,
+        concurrency: 10,
+        onfinished: function () {
+          // waiting to add another task
+          setTimeout(function(){
+            // adding another task
+            pool.addTask(new Task({
+              path: './test/printer',
+              args: [ '-f', 10 ],
+              description: 'task #10'
+            }, pool ));
+            // waiting to call done
+            setTimeout(function(){
+              // calling done
+              done();
+            }, 1000);
+          }, 1000);
+        }
+      });
+
+      pool.run();
+
+    });
+
+    it('new tasks accept callbacks', function (done) {
+
+      function taskCompleteCallback (err){
+        debug('finished task', this.id);
+        done();
+      }
+
+      var pool = new Forq({
+        workers: tasks,
+        concurrency: 10,
+        onfinished: function () {
+          // waiting to add another task
+          setTimeout(function(){
+            // adding another task
+            pool.addTask(new Task({
+              path: './test/printer',
+              args: [ '-f', 10 ],
+              description: 'task #10'
+            }, pool ), taskCompleteCallback);
+          }, 1000);
         }
       });
 

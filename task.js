@@ -125,15 +125,18 @@ function __setForkTimer (f) {
   }, f.pollFrequency || DEFAULT_POLLING_FREQUENCY );
 }
 
-function Task (w, p, d) {
+function Task (w, p) {
   var ctx = this;
   var self = p;
+  var d = p.domain;
+  this.completed = false;
   this.fn = function fn (done) {
 
     function terminate (err) {
       var e = err ? err : null;
       clearInterval(this.timer);
       if (!this.terminated) {
+        ctx.completed = true;
         debug('terminated worker '+this.id);
         this.terminated = true;
         if (this.connected) { this.emit('terminated'); }
@@ -154,7 +157,7 @@ function Task (w, p, d) {
     var f = fork.apply(this, fork_args);
 
     // access fork object from context
-    ctx.f = f;
+    ctx.fn.fork = f;
 
     // store start time of fork
     f.startTime = Date.now();
@@ -190,6 +193,9 @@ function Task (w, p, d) {
 
     // assign fork id
     __assignForkId.apply(f);
+
+    // expose id in task context
+    ctx.id = f.id;
 
     f.terminated = false;
     f.hasFinished = false;

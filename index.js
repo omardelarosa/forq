@@ -45,10 +45,9 @@ function Forq (opts) {
   this.forksHash = {};
   this.forks = [];
   this.data = {};
-
+  this.tasks = [];
   // start pool timer
   this.__setPoolTimer();
-
   this.queue.drain = (function(res) {
     debug("finished all tasks and calling drain");
     if (this.opts.drain && this.opts.drain.constructor === Function) {
@@ -75,7 +74,7 @@ Forq.prototype.__setPoolTimer = function () {
   this.timer = setInterval(function(){
     var currentTime = Date.now();
     debug("currently active forks in pool", self.getNumberOfActiveForks() );
-    if (self.getNumberOfActiveForks() === 0) {
+    if (self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
       clearInterval(self.timer);
       self.emit('finished', { status: 'completed' });
     } else if (currentTime - self.startTime > self.killTimeout) {
@@ -91,9 +90,16 @@ Forq.prototype.__setPoolTimer = function () {
 Forq.prototype.getNumberOfActiveForks = function() {
   if ( this.forks && this.forks.length > 0 ) {
     return this.forks.filter(function(f){ return !f.terminated; }).length;
+  } else {
+    return 0;
   }
 };
 
+Forq.prototype.getNumberOfPendingTasks = function() {
+  return this.tasks.filter(function(t){ return !t.completed; }).length;
+};
+
+// iterates through workers array and generates a task for each worker
 Forq.prototype.run = function () {
   var self = this;
   this.killAll(); // kill any existing forks
@@ -102,27 +108,35 @@ Forq.prototype.run = function () {
   d.on('error', function (er) {
     if ( er.domainEmitter && self.errors[er.domainEmitter.id] ) {
       self.errors[er.domainEmitter.id].push(er);
-      self.emit('error', er);
+      self.emit('error', er, er.domainEmitter);
     }
   });
 
   this.workers.forEach(function(w){
-    self.addTask(w);
+    var t = new Task(w, self);
+    self.addTask(t);
+    self.tasks.push(t);
   });
 
   this.oninit();
-
+  this.hasRun = true;
   return this;
 };
 
-Forq.prototype.addTask = function(worker) {
-  var t = new Task(worker, this, d);
+Forq.prototype.addTask = function(t, cb) {
   this.queue.push({
     action: t.fn.bind(this)
   }, function(err){
     // log errors processing forks
+    debug("completed task", t.id);
+    t.completed = true;
     if (err) {
       // TODO: listen and broadcast for these errors in a stable way
+      debug('task '+t.id+'finished with error'+err.toString());
+    }
+    // call the callback of there is one
+    if (cb && cb.constructor === Function) {
+      cb.call(t, err);
     }
   });
 };

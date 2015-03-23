@@ -68,6 +68,68 @@ Run all the workers in the array passed into your worker pool:
 pool.run();
 ```
 
+###Tasks
+After a worker pool has been initialized, additional work can be added as a ``Task``.  To use a task, first require the ``Task`` constructor:
+
+```
+var Task = require('fork/task');
+```
+Then just use the ``.addTask`` method to add it to the worker pool
+```
+var pool = new Forq({
+  workers: tasks,
+  concurrency: 10,
+  onfinished: function () {
+    
+    // waiting to add another task
+    setTimeout(function(){
+    
+      // adding another task
+      pool.addTask(new Task({
+        path: './test/printer',
+        args: [ '-f', 10 ],
+        description: 'task #10'
+      }, pool ));
+    
+    }, 1000);
+  
+  }
+});
+
+pool.run();
+```
+
+Tasks also accept callbacks:
+
+```
+var pool = new Forq({
+  workers: tasks,
+  concurrency: 10,
+  onfinished: function () {
+    
+    // waiting to add another task
+    setTimeout(function(){
+    
+      // adding another task
+      pool.addTask(new Task({
+        path: './test/printer',
+        args: [ '-f', 10 ],
+        description: 'task #10'
+      }, pool, 
+
+      // this is a callback that fires when the task has been processed
+      function (err) {
+        // insert your callback logic here
+      }));
+    
+    }, 1000);
+  
+  }
+});
+
+pool.run();
+```
+
 ###Callbacks
 You may also set an optional callback to fire when the pool has been notified that all worker forks have terminated:
 
