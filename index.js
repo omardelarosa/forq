@@ -96,7 +96,8 @@ Forq.prototype.getNumberOfActiveForks = function() {
 };
 
 Forq.prototype.getNumberOfPendingTasks = function() {
-  return this.tasks.filter(function(t){ return !t.completed; }).length;
+  // note: if a task doesn't yet have a fork, it's queued but hasn't been started.  thus it's pending
+  return this.tasks.filter(function(t){ return t.fn.fork ? t.fn.fork.connected : true; }).length;
 };
 
 // iterates through workers array and generates a task for each worker
@@ -129,7 +130,6 @@ Forq.prototype.addTask = function(t, cb) {
   }, function(err){
     // log errors processing forks
     debug("completed task", t.id);
-    t.completed = true;
     if (err) {
       // TODO: listen and broadcast for these errors in a stable way
       debug('task '+t.id+'finished with error'+err.toString());

@@ -136,7 +136,7 @@ function Task (w, p) {
       var e = err ? err : null;
       clearInterval(this.timer);
       if (!this.terminated) {
-        ctx.completed = true;
+        this.task.completed = true;
         debug('terminated worker '+this.id);
         this.terminated = true;
         if (this.connected) { this.emit('terminated'); }
@@ -155,6 +155,9 @@ function Task (w, p) {
 
     // create the forked process
     var f = fork.apply(this, fork_args);
+
+    // expose task context in fork
+    f.task = ctx;
 
     // access fork object from context
     ctx.fn.fork = f;
@@ -198,7 +201,6 @@ function Task (w, p) {
     ctx.id = f.id;
 
     f.terminated = false;
-    f.hasFinished = false;
     
     // add to forks hash
     self.forksHash[f.id] = f;
