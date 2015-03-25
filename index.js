@@ -73,9 +73,10 @@ Forq.prototype.__setPoolTimer = function () {
   var self = this;
   this.timer = setInterval(function(){
     var currentTime = Date.now();
+    debug('total tasks in pool', self.tasks.length);
     debug("total forks in pool", self.forks.length);
     debug("currently active forks in pool", self.getNumberOfActiveForks() );
-    if (self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
+    if (self.queue.idle() && self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
       clearInterval(self.timer);
       self.emit('finished', { status: 'completed' });
     } else if (currentTime - self.startTime > self.killTimeout) {
