@@ -74,8 +74,10 @@ Forq.prototype.__setPoolTimer = function () {
   this.timer = setInterval(function(){
     var currentTime = Date.now();
     debug('total tasks in pool', self.tasks.length);
-    debug("total forks in pool", self.forks.length);
-    debug("currently active forks in pool", self.getNumberOfActiveForks() );
+    debug('total forks in pool', self.forks.length);
+    debug('total pending task', self.getNumberOfPendingTasks() );
+    debug('pool queue idle? ', self.queue.idle() );
+    debug('currently active forks in pool', self.getNumberOfActiveForks() );
     if (self.queue.idle() && self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
       clearInterval(self.timer);
       self.emit('finished', { status: 'completed' });
@@ -118,7 +120,6 @@ Forq.prototype.run = function () {
   this.workers.forEach(function(w){
     var t = new Task(w, self);
     self.addTask(t);
-    self.tasks.push(t);
   });
 
   this.oninit();
@@ -127,6 +128,7 @@ Forq.prototype.run = function () {
 };
 
 Forq.prototype.addTask = function(t, cb) {
+  this.tasks.push(t);
   this.queue.push({
     action: t.fn.bind(this)
   }, function(err){
