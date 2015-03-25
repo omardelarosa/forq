@@ -11,8 +11,8 @@ ForkError.prototype.toObject = function () {
     name: this.name,
     message: this.message,
     stack: {}
-  }
-}
+  };
+};
 
 function ChildProcessSoftError (e, extra) {
   this.message = e.message;

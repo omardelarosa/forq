@@ -8,7 +8,7 @@ var testsGlob = args.path || './test/**/*_spec.js';
 var reporter = args.R || 'spec';
 
 gulp.task('lint', function(){
-  return gulp.src([ './test/**/*.js', './index.js' ])
+  return gulp.src([ './test/**/*.js', './index.js', './task.js', './errors.js' ])
     .pipe(jshint())
     .pipe(jshint.reporter(stylish));
 });
