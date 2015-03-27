@@ -32,7 +32,7 @@ setTimeout(function(){
 }, 500)
 ```
 
-###Pool
+### Queue
 Setup an array of tasks that reference one or more node module:
 
 ```javascript
@@ -74,7 +74,7 @@ Start all the tasks in the array passed into your fork queue using ``.run``:
 queue.run();
 ```
 
-###Tasks
+### Adding Additional Tasks
 After a task queue has been initialized, additional work can be added as a ``Task``.  To use a task, first require the ``Task`` constructor:
 
 ```javascript
