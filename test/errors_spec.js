@@ -88,7 +88,7 @@ describe('Error Handling', function(){
       tasks.push({
         path: './test/errorer',
         args: [ '-f', 5 ],
-        id: 'important_error_prone_worker',
+        id: 'important_error_prone_task',
         description: 'task #1',
         opts: {
           // silence errors from log
@@ -129,7 +129,7 @@ describe('Error Handling', function(){
 
       queue.run();
 
-      queue.on('workerError:important_error_prone_worker', function(err){
+      queue.on('taskError:important_error_prone_task', function(err){
         try {
           expect(err, 'an important error').to.be.an.instanceOf(ForkError);
           done();

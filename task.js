@@ -18,7 +18,7 @@ function __attachEventListeners () {
   var standard_fork_event_names = [ 'error', 'exit', 'disconnect', 'message' ];
   var f = this;
   var events = this.events;
-  var w = this.worker;
+  var w = this.work;
   var eventName;
   
   var customEvents = _.each(events, function(v, k) {
@@ -57,10 +57,10 @@ function __attachEventListeners () {
     if (code !== 0) {
       errorObj = new Errors.ForkError('fork "'+f.id+'" threw an error with code '+code);
       f.emit('error', errorObj);
-      // emit a general worker error
-      f.queue.emit('workerError', errorObj );
-      // emit a namespaced error for the individual worker
-      f.queue.emit('workerError:'+f.id, errorObj);
+      // emit a general task error
+      f.queue.emit('taskError', errorObj );
+      // emit a namespaced error for the individual task
+      f.queue.emit('taskError:'+f.id, errorObj);
     }
     if (f.connected) {
       // signal termination via pseudo-event

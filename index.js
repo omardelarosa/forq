@@ -146,6 +146,10 @@ Forq.prototype.addTask = function(t, cb) {
   });
 };
 
+Forq.prototype.idle = function () {
+  return this.__queue.idle();
+}
+
 Forq.prototype.killAll = function () {
   if (this.forks) {
     if (this.forks.length > 0) {
