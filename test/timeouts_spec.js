@@ -39,7 +39,7 @@ describe('Timeouts', function(){
       var start = Date.now();
       var end;
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 10,
         killTimeout: 10000,
@@ -54,13 +54,13 @@ describe('Timeouts', function(){
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
   });
 
-  describe('kills timeout for pools', function() {
+  describe('kills timeout for queues', function() {
 
     var workers = [];
     var killTimeout = 5000;
@@ -83,11 +83,11 @@ describe('Timeouts', function(){
 
     });
 
-    it("should terminate pools once they exceed their pool timeout", function(done) {
+    it("should terminate queues once they exceed their queue timeout", function(done) {
       var start = Date.now();
       var end;
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 10,
         onfinished: function () {
@@ -100,7 +100,7 @@ describe('Timeouts', function(){
         killTimeout: killTimeout
       });
 
-      pool.run();
+      queue.run();
 
     });
 

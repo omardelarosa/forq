@@ -33,33 +33,33 @@ describe('Error Handling', function(){
     });
 
     it('catches errors that occur in forks', function(done){
-      var pool = new Forq({
+      var queue = new Forq({
       workers: workers,
       concurrency: 10,
       onfinished: function () {
-          var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
+          var errors = _.filter(queue.errors, function(err) { return err.length > 0; });
           try {
             expect(errors.length, 'number of forks with errors').to.eq(2);
             done();
           } catch (e) { done(e); }
         }
       });
-      pool.run();
+      queue.run();
     });
 
     it('raises SoftError and ForkError types', function(done){
       
-      var poolErrors = [];
+      var queueErrors = [];
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 10,
         onfinished: function () {
-          var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
+          var errors = _.filter(queue.errors, function(err) { return err.length > 0; });
           try {
             expect(errors.length, 'number of forks with errors').to.eq(2);
-            expect(poolErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
-            expect(poolErrors.filter(function(e){ return e.constructor === ForkError; }), 'ForkErrors').to.have.length(1);
+            expect(queueErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
+            expect(queueErrors.filter(function(e){ return e.constructor === ForkError; }), 'ForkErrors').to.have.length(1);
             done();
           } catch (e) { done(e); }
         },
@@ -70,10 +70,10 @@ describe('Error Handling', function(){
         }
       });
 
-      pool.run();
+      queue.run();
       
-      pool.on('error', function(err){
-        poolErrors.push(err);
+      queue.on('error', function(err){
+        queueErrors.push(err);
       });
     
     });
@@ -122,14 +122,14 @@ describe('Error Handling', function(){
 
     it('emits errors using a namespace', function(done){
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 10
       });
 
-      pool.run();
+      queue.run();
 
-      pool.on('workerError:important_error_prone_worker', function(err){
+      queue.on('workerError:important_error_prone_worker', function(err){
         try {
           expect(err, 'an important error').to.be.an.instanceOf(ForkError);
           done();
@@ -168,7 +168,7 @@ describe('Error Handling', function(){
       var start = Date.now();
       var end;
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 10,
         killTimeout: 10000,
@@ -183,13 +183,13 @@ describe('Error Handling', function(){
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
   });
 
-  describe('kills timeout for pools', function() {
+  describe('kills timeout for queues', function() {
 
     var workers = [];
     var killTimeout = 5000;
@@ -212,11 +212,11 @@ describe('Error Handling', function(){
 
     });
 
-    it("should terminate pools once they exceed their pool timeout", function(done) {
+    it("should terminate queues once they exceed their queue timeout", function(done) {
       var start = Date.now();
       var end;
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 10,
         onfinished: function () {
@@ -229,7 +229,7 @@ describe('Error Handling', function(){
         killTimeout: killTimeout
       });
 
-      pool.run();
+      queue.run();
 
     });
 

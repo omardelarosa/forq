@@ -47,17 +47,17 @@ function Forq (opts) {
   this.forks = [];
   this.data = {};
   this.tasks = [];
-  // start pool timer
-  this.__setPoolTimer();
+  // start queue timer
+  this.__setQueueTimer();
   this.__queue.drain = (function(res) {
     debug("finished all tasks and calling drain");
     if (this.opts.drain && this.opts.drain.constructor === Function) {
-      this.opts.drain.call(this, pool);
+      this.opts.drain.call(this, queue);
     }
   }).bind(this);
 
   this.__onfinish = (function(res) {
-    debug('finished closing all active forks in pool');
+    debug('finished closing all active forks in queue');
     if (this.opts.onfinished && this.opts.onfinished.constructor === Function) {
       this.opts.onfinished.call(this, res);
     }
@@ -70,15 +70,15 @@ function Forq (opts) {
 // inherit from EventEmitter
 util.inherits(Forq, EventEmitter);
 
-Forq.prototype.__setPoolTimer = function () {
+Forq.prototype.__setQueueTimer = function () {
   var self = this;
   this.timer = setInterval(function(){
     var currentTime = Date.now();
-    debug('total tasks in pool', self.tasks.length);
-    debug('total forks in pool', self.forks.length);
+    debug('total tasks in queue', self.tasks.length);
+    debug('total forks in queue', self.forks.length);
     debug('total pending task', self.getNumberOfPendingTasks() );
-    debug('pool queue idle? ', self.__queue.idle() );
-    debug('currently active forks in pool', self.getNumberOfActiveForks() );
+    debug('queue queue idle? ', self.__queue.idle() );
+    debug('currently active forks in queue', self.getNumberOfActiveForks() );
     if (self.__queue.idle() && self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
       clearInterval(self.timer);
       self.emit('finished', { status: 'completed' });
@@ -87,7 +87,7 @@ Forq.prototype.__setPoolTimer = function () {
       self.killAll();
       self.emit('finished', { status: 'aborted' });
     } else {
-      debug('pool is waiting for forks to terminate');
+      debug('queue is waiting for forks to terminate');
     }
   }, self.pollFrequency);
 };

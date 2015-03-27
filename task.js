@@ -58,9 +58,9 @@ function __attachEventListeners () {
       errorObj = new Errors.ForkError('fork "'+f.id+'" threw an error with code '+code);
       f.emit('error', errorObj);
       // emit a general worker error
-      f.pool.emit('workerError', errorObj );
+      f.queue.emit('workerError', errorObj );
       // emit a namespaced error for the individual worker
-      f.pool.emit('workerError:'+f.id, errorObj);
+      f.queue.emit('workerError:'+f.id, errorObj);
     }
     if (f.connected) {
       // signal termination via pseudo-event
@@ -105,7 +105,7 @@ function __assignForkId () {
   function hid(){ return Date.now().toString('16').slice(2); }
   var id = w.id ? w.id : hid();
 
-  if (!this.pool.forksHash[id]) {
+  if (!this.queue.forksHash[id]) {
     this.id = id;
   } else {
     this.id = hid();
@@ -165,8 +165,8 @@ function Task (w, p) {
     // store start time of fork
     f.startTime = Date.now();
 
-    // access pool from fork
-    f.pool = self;
+    // access queue from fork
+    f.queue = self;
 
     // attach worker to fork
     f.worker = w;
@@ -179,7 +179,7 @@ function Task (w, p) {
     // store callback
     f.cb = done;
 
-    // store events from pool
+    // store events from queue
     f.events = self.events || {};
 
     // add fork to the domain

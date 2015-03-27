@@ -14,7 +14,7 @@ describe('Forq Worker Pools', function(){
   describe('queueing', function(){
 
     var workers = [];
-    var pool;
+    var queue;
 
     before(function(){
       // make workers
@@ -28,9 +28,9 @@ describe('Forq Worker Pools', function(){
 
     });
 
-    it('finishes all tasks using worker pool', function (done){
-      // initialize new pool
-      pool = new Forq({
+    it('finishes all tasks using worker queue', function (done){
+      // initialize new queue
+      queue = new Forq({
         workers: workers,
         onfinished: function() {
           try {
@@ -40,21 +40,21 @@ describe('Forq Worker Pools', function(){
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
-    it('running the pool again clears prior forks', function (done) {
+    it('running the queue again clears prior forks', function (done) {
 
       // redefine drain function from what was initialized
-      pool.__queue.drain = function() {
+      queue.__queue.drain = function() {
         try {
-          expect(pool.forks.length, 'number of forks').to.eq(10);
+          expect(queue.forks.length, 'number of forks').to.eq(10);
           done();
         } catch (e) { done(e); } 
       };
 
-      pool.run();
+      queue.run();
 
     });
 
@@ -76,13 +76,13 @@ describe('Forq Worker Pools', function(){
 
     });
 
-    it('fires events that are defined in the worker pool options', function(done){
-      // initialize new pool
-      var pool = new Forq({
+    it('fires events that are defined in the worker queue options', function(done){
+      // initialize new queue
+      var queue = new Forq({
         workers: workers,
         onfinished: function () {
           try {
-            expect(pool.forks.length, 'number of forks').to.eq(10);
+            expect(queue.forks.length, 'number of forks').to.eq(10);
             done();
           } catch (e) { done(e); }
         },
@@ -92,19 +92,19 @@ describe('Forq Worker Pools', function(){
           }
         }
       });
-      pool.run();
+      queue.run();
 
     });
 
-    it('can use the pool to share data between forks', function (done){
+    it('can use the queue to share data between forks', function (done){
       
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         onfinished: function () {
-          debug("pool status", this.__data.statuses);
+          debug("queue status", this.__data.statuses);
           try {
-            expect(this.__data.tempCounter, 'pool temp counter').to.eq(1000);
-            expect(this.__data.statuses, 'pool status list').to.have.length(10);
+            expect(this.__data.tempCounter, 'queue temp counter').to.eq(1000);
+            expect(this.__data.statuses, 'queue status list').to.have.length(10);
             done();
           } catch (e) {
             done(e);
@@ -119,13 +119,13 @@ describe('Forq Worker Pools', function(){
           myCustomEvent: function(data){
             debug("custom event has fired", data, this);
             var statuses = [ 'fine', 'cool', 'hungry', 'bored'];
-            this.pool.__data.tempCounter += data.temp;
-            this.pool.__data.statuses.push(_.sample(statuses));
+            this.queue.__data.tempCounter += data.temp;
+            this.queue.__data.statuses.push(_.sample(statuses));
           }
         }
       });
 
-      pool.run();
+      queue.run();
     });
 
   });
@@ -151,36 +151,36 @@ describe('Forq Worker Pools', function(){
 
     it('limits the concurrency at the number of cpu cores', function(done){
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: (NUM_CPUS*2),
         onfinished: function () {
           try {
-            expect(pool.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
+            expect(queue.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
             done();
           } catch (e) { done(e); }
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
     it('ignores concurrency limits when in "noLimits" mode', function(done){
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: workers,
         concurrency: 20,
         noLimits: true,
         onfinished: function () {
           try {
-            expect(pool.concurrencyLimit, 'concurrency limit').to.eq(20);
+            expect(queue.concurrencyLimit, 'concurrency limit').to.eq(20);
             done();
           } catch (e) { done(e); }
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
@@ -205,18 +205,18 @@ describe('Forq Worker Pools', function(){
 
     it('allows tasks to be added to the queue in progress', function (done) {
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: tasks,
         concurrency: 10,
         onfinished: function () {
           // waiting to add another task
           setTimeout(function(){
             // adding another task
-            pool.addTask(new Task({
+            queue.addTask(new Task({
               path: './test/printer',
               args: [ '-f', 10 ],
               description: 'task #10'
-            }, pool ));
+            }, queue ));
             // waiting to call done
             setTimeout(function(){
               // calling done
@@ -226,7 +226,7 @@ describe('Forq Worker Pools', function(){
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
@@ -237,23 +237,23 @@ describe('Forq Worker Pools', function(){
         done();
       }
 
-      var pool = new Forq({
+      var queue = new Forq({
         workers: tasks,
         concurrency: 10,
         onfinished: function () {
           // waiting to add another task
           setTimeout(function(){
             // adding another task
-            pool.addTask(new Task({
+            queue.addTask(new Task({
               path: './test/printer',
               args: [ '-f', 10 ],
               description: 'task #10'
-            }, pool ), taskCompleteCallback);
+            }, queue ), taskCompleteCallback);
           }, 1000);
         }
       });
 
-      pool.run();
+      queue.run();
 
     });
 
