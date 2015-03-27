@@ -15,7 +15,7 @@ describe('Timeouts', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 1000;
+    var bufferTime = 1500;
     this.timeout(60000);
 
     before(function(){
@@ -64,7 +64,7 @@ describe('Timeouts', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 1000;
+    var bufferTime = 1500;
     this.timeout(60000);
 
     before(function(){

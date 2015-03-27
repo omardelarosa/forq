@@ -144,7 +144,7 @@ describe('Error Handling', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 1000;
+    var bufferTime = 1500;
     this.timeout(30000);
 
     before(function(){
@@ -193,7 +193,7 @@ describe('Error Handling', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 1000;
+    var bufferTime = 1500;
     this.timeout(30000);
 
     before(function(){

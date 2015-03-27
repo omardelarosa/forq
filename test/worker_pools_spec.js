@@ -166,6 +166,24 @@ describe('Forq Worker Pools', function(){
 
     });
 
+    it('ignores concurrency limits when in "noLimits" mode', function(done){
+
+      var pool = new Forq({
+        workers: workers,
+        concurrency: 20,
+        noLimits: true,
+        onfinished: function () {
+          try {
+            expect(pool.concurrencyLimit, 'concurrency limit').to.eq(20);
+            done();
+          } catch (e) { done(e); }
+        }
+      });
+
+      pool.run();
+
+    });
+
   });
 
   describe('adding tasks', function(){
