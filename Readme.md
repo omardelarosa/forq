@@ -1,5 +1,10 @@
 # Forq
-[![build status](https://travis-ci.org/omardelarosa/forq.png?branch=master)](https://travis-ci.org/omardelarosa/forq?branch=master) [![npm version](https://img.shields.io/npm/v/forq.svg)](https://img.shields.io/npm/v/forq.svg)
+## Build Status
+Branch  | Build Status | Version
+------- | ------------ | ----
+ master | [![build status](https://travis-ci.org/omardelarosa/forq.png?branch=master)](https://travis-ci.org/omardelarosa/forq?branch=master)  |  [![npm version](https://img.shields.io/npm/v/forq.svg)](https://img.shields.io/npm/v/forq.svg)
+ development | [![build status](https://travis-ci.org/omardelarosa/forq.png?branch=development)](https://travis-ci.org/omardelarosa/forq?branch=development) | 0.0.7
+
 
 Manage forked processes using [Node](http://nodejs.org/) and [Async.js](https://github.com/caolan/async)
 
