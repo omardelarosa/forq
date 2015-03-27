@@ -7,19 +7,19 @@ var Task = require('../task');
 var SoftError = Forq.Errors.SoftError;
 var ForkError = Forq.Errors.ForkError;
 
-describe('Forq Worker Pools', function(){
+describe('Queues', function(){
 
   this.timeout(10000);
 
   describe('queueing', function(){
 
-    var workers = [];
+    var tasks = [];
     var queue;
 
     before(function(){
-      // make workers
+      // make tasks
       for (var i = 0; i < 10; i ++ ) {
-        workers.push({
+        tasks.push({
           path: './test/printer',
           args: [ '-f', i ],
           description: 'task #'+i
@@ -31,7 +31,7 @@ describe('Forq Worker Pools', function(){
     it('finishes all tasks using worker queue', function (done){
       // initialize new queue
       queue = new Forq({
-        workers: workers,
+        todo: tasks,
         onfinished: function() {
           try {
             expect(this.forks.filter(function(f){ return !f.terminated; }), 'unfinished tasks array').to.have.length(0);
@@ -62,12 +62,12 @@ describe('Forq Worker Pools', function(){
 
   describe('events', function(){
 
-    var workers = [];
+    var tasks = [];
 
     before(function(){
-      // make workers
+      // make tasks
       for (var i = 0; i < 10; i ++ ) {
-        workers.push({
+        tasks.push({
           path: './test/printer',
           args: [ '-f', i ],
           description: 'task #'+i
@@ -79,7 +79,7 @@ describe('Forq Worker Pools', function(){
     it('fires events that are defined in the worker queue options', function(done){
       // initialize new queue
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         onfinished: function () {
           try {
             expect(queue.forks.length, 'number of forks').to.eq(10);
@@ -99,7 +99,7 @@ describe('Forq Worker Pools', function(){
     it('can use the queue to share data between forks', function (done){
       
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         onfinished: function () {
           debug("queue status", this.__data.statuses);
           try {
@@ -132,15 +132,15 @@ describe('Forq Worker Pools', function(){
 
   describe('concurrency', function(){
 
-    var workers = [];
+    var tasks = [];
     var NUM_CPUS;
 
     before(function(){
-      // make workers
+      // make tasks
       NUM_CPUS = require('os').cpus().length;
 
       for (var i = 0; i < (NUM_CPUS*2); i ++ ) {
-        workers.push({
+        tasks.push({
           path: './test/printer',
           args: [ '-f', i ],
           description: 'task #'+i
@@ -152,7 +152,7 @@ describe('Forq Worker Pools', function(){
     it('limits the concurrency at the number of cpu cores', function(done){
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: (NUM_CPUS*2),
         onfinished: function () {
           try {
@@ -169,7 +169,7 @@ describe('Forq Worker Pools', function(){
     it('ignores concurrency limits when in "noLimits" mode', function(done){
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 20,
         noLimits: true,
         onfinished: function () {
@@ -206,7 +206,7 @@ describe('Forq Worker Pools', function(){
     it('allows tasks to be added to the queue in progress', function (done) {
 
       var queue = new Forq({
-        workers: tasks,
+        todo: tasks,
         concurrency: 10,
         onfinished: function () {
           // waiting to add another task
@@ -238,7 +238,7 @@ describe('Forq Worker Pools', function(){
       }
 
       var queue = new Forq({
-        workers: tasks,
+        todo: tasks,
         concurrency: 10,
         onfinished: function () {
           // waiting to add another task

@@ -101,7 +101,7 @@ function __attachEventListeners () {
 }
 
 function __assignForkId () {
-  var w = this.worker;
+  var w = this.work;
   function hid(){ return Date.now().toString('16').slice(2); }
   var id = w.id ? w.id : hid();
 
@@ -125,10 +125,10 @@ function __setForkTimer (f) {
   }, f.pollFrequency || DEFAULT_POLLING_FREQUENCY );
 }
 
-function Task (w, p) {
+function Task (w, q) {
   var ctx = this;
-  var self = p;
-  var d = p.domain;
+  var self = q;
+  var d = q.domain;
   this.completed = false;
   this.fn = function fn (done) {
 
@@ -168,8 +168,8 @@ function Task (w, p) {
     // access queue from fork
     f.queue = self;
 
-    // attach worker to fork
-    f.worker = w;
+    // attach work params to fork
+    f.work = w;
     
     // set killTimeout of fork
     f.killTimeout = w.killTimeout || DEFAULT_TIMEOUT;

@@ -13,13 +13,13 @@ describe('Error Handling', function(){
 
   describe('basic errors', function (){
 
-    var workers = [];
+    var tasks = [];
     var errorCounter = 0;
     
     before(function(){
-      // make workers
+      // make tasks
       for (var i = 0; i < 10; i ++ ) {
-        workers.push({
+        tasks.push({
           path: i == 7 ? './test/soft_errorer' : './test/errorer',
           args: [ '-f', i ],
           description: 'task #'+i,
@@ -34,7 +34,7 @@ describe('Error Handling', function(){
 
     it('catches errors that occur in forks', function(done){
       var queue = new Forq({
-      workers: workers,
+      todo: tasks,
       concurrency: 10,
       onfinished: function () {
           var errors = _.filter(queue.errors, function(err) { return err.length > 0; });
@@ -52,7 +52,7 @@ describe('Error Handling', function(){
       var queueErrors = [];
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 10,
         onfinished: function () {
           var errors = _.filter(queue.errors, function(err) { return err.length > 0; });
@@ -81,11 +81,11 @@ describe('Error Handling', function(){
   });
 
   describe('error namespacing', function(){
-    var workers = [];
+    var tasks = [];
 
     before(function(){
-      // make workers
-      workers.push({
+      // make tasks
+      tasks.push({
         path: './test/errorer',
         args: [ '-f', 5 ],
         id: 'important_error_prone_worker',
@@ -96,7 +96,7 @@ describe('Error Handling', function(){
         }
       });
 
-      workers.push({
+      tasks.push({
         path: './test/errorer',
         args: [ '-f', 5 ],
         id: 'unimportant_error_prone_worker',
@@ -107,7 +107,7 @@ describe('Error Handling', function(){
         }
       });
 
-      workers.push({
+      tasks.push({
         path: './test/printer',
         args: [ '-f', 3 ],
         id: 'normal_worker',
@@ -123,7 +123,7 @@ describe('Error Handling', function(){
     it('emits errors using a namespace', function(done){
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 10
       });
 
@@ -140,17 +140,17 @@ describe('Error Handling', function(){
 
   });
 
-  describe('kill timeout for workers', function() {
+  describe('kill timeout for tasks', function() {
 
-    var workers = [];
+    var tasks = [];
     var killTimeout = 5000;
     var bufferTime = 1500;
     this.timeout(30000);
 
     before(function(){
-      // make workers
+      // make tasks
 
-      workers.push({
+      tasks.push({
         path: './test/slow_worker',
         args: [ '-f', 1 ],
         id: 'slow_worker',
@@ -169,7 +169,7 @@ describe('Error Handling', function(){
       var end;
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 10,
         killTimeout: 10000,
         events: {
@@ -191,15 +191,15 @@ describe('Error Handling', function(){
 
   describe('kills timeout for queues', function() {
 
-    var workers = [];
+    var tasks = [];
     var killTimeout = 5000;
     var bufferTime = 1500;
     this.timeout(30000);
 
     before(function(){
-      // make workers
+      // make tasks
 
-      workers.push({
+      tasks.push({
         path: './test/slow_worker',
         args: [ '-f', 1 ],
         id: 'slow_worker',
@@ -217,7 +217,7 @@ describe('Error Handling', function(){
       var end;
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 10,
         onfinished: function () {
           end = Date.now();

@@ -11,17 +11,17 @@ describe('Timeouts', function(){
 
   this.timeout(10000);
 
-  describe('kill timeout for workers', function() {
+  describe('kill timeout for tasks', function() {
 
-    var workers = [];
+    var tasks = [];
     var killTimeout = 5000;
     var bufferTime = 1500;
     this.timeout(60000);
 
     before(function(){
-      // make workers
+      // make tasks
 
-      workers.push({
+      tasks.push({
         path: './test/slow_worker',
         args: [ '-f', 1 ],
         id: 'slow_worker',
@@ -40,7 +40,7 @@ describe('Timeouts', function(){
       var end;
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 10,
         killTimeout: 10000,
         events: {
@@ -62,15 +62,15 @@ describe('Timeouts', function(){
 
   describe('kills timeout for queues', function() {
 
-    var workers = [];
+    var tasks = [];
     var killTimeout = 5000;
     var bufferTime = 1500;
     this.timeout(60000);
 
     before(function(){
-      // make workers
+      // make tasks
 
-      workers.push({
+      tasks.push({
         path: './test/slow_worker',
         args: [ '-f', 1 ],
         id: 'slow_worker',
@@ -88,7 +88,7 @@ describe('Timeouts', function(){
       var end;
 
       var queue = new Forq({
-        workers: workers,
+        todo: tasks,
         concurrency: 10,
         onfinished: function () {
           end = Date.now();

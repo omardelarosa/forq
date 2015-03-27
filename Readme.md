@@ -61,7 +61,7 @@ Initialize your new fork queue with the array of tasks
 ```javascript
 // initialize new task queue
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   // set your desired concurrency
   concurrency: 4
 });
@@ -80,11 +80,11 @@ After a task queue has been initialized, additional work can be added as a ``Tas
 ```javascript
 var Task = require('fork/task');
 ```
-Then just use the ``.addTask`` method to add it to the worker pool
+Then just use the ``.addTask`` method to add it to the queue
 
 ```javascript
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   onfinished: function () {
     
     // waiting to add another task
@@ -108,7 +108,7 @@ Tasks also accept callbacks:
 
 ```javascript
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   onfinished: function () {
     
     // waiting to add another task
@@ -137,12 +137,12 @@ queue.run();
 ```
 
 ###Callbacks
-You may also set an optional callback to fire when the fork queue has been notified that all worker forks have terminated:
+You may also set an optional callback to fire when the fork queue has been notified that all task forks have terminated:
 
 ```javascript
 // initialize new queue
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   // set your desired concurrency
   concurrency: 4,
   // optional callback
@@ -161,11 +161,11 @@ These events can be bound on the ``events`` key on queue initialization.
 
 ```javascript
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   onfinished: function () {
    // stuff to do when the task queue finishes all tasks and there are no active processes/tasks
   },
-  // worker events to listen for and react to
+  // task events to listen for and react to
   events: {
     exit: function(code, err) {
       // stuff to do on process exit
@@ -185,7 +185,7 @@ By default, tasks and queues emit a variety of events:
 -----------  | -------------------------- | --------
 ``finished`` |  -> ( { status:  '...' } ) | possible statuses: 'completed', 'aborted'
 ``error``    |  -> ( err )                | see the errors.js module for different error types
-``taskError``| -> (err)                 | when any worker fires an error
+``taskError``| -> (err)                 | when any task fires an error
 ``taskError:{idOfTask}`` | -> (err) | when an specific task with specified id fires an error
 
 #### Task Events
@@ -207,9 +207,9 @@ Each event's ``this`` is bound to the ``Process`` instance that triggered it.  T
 ##Sharing Data Among Tasks In a Queue
 Tasks can share data by attaching it to the ``queue``.  For example:
 ```javascript
-// initialize the worker pool
+// initialize the queue
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   onfinished: function () {
     // check updated values
     console.log(this.__data.tempCounter);
@@ -262,7 +262,7 @@ var tasks = [
 ];
 
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   concurrency: 10,
   onfinish: function () {
     // all done!
@@ -290,7 +290,7 @@ Both tasks and queues can have timeouts set ``killTimeout`` attribute upon their
 ###Pool Timeout
 ```javascript
 var queue = new Forq({
-  tasks: tasks,
+  todo: tasks,
   concurrency: 10,
   // set a 10 second timeout for the pool
   killTimeout: 10000,
@@ -305,7 +305,7 @@ tasks.push({
   path: './test/slow_worker',
   args: [ ],
   id: 'slow_task',
-  // a 10 second timeout on the worker
+  // a 10 second timeout on the task
   killTimeout: 10000,
     // poll frequency of 1 second
   pollFrequency: 1000

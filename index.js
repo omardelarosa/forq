@@ -35,7 +35,7 @@ function Forq (opts) {
     this.concurrencyLimit = NUM_CPUS;
   }
   this.startTime = Date.now();
-  this.workers = this.opts.workers || [];
+  this.todo = this.opts.todo|| [];
   this.events = opts.events || {};
   this.oninit = opts.oninit ? opts.oninit.bind(this) : function () { return this; };
   var q = async.queue(function(task, done){
@@ -105,7 +105,7 @@ Forq.prototype.getNumberOfPendingTasks = function() {
   return this.tasks.filter(function(t){ return t.fn.fork ? t.fn.fork.connected : true; }).length;
 };
 
-// iterates through workers array and generates a task for each worker
+// iterates through todo array and generates a task for each item in it
 Forq.prototype.run = function () {
   var self = this;
   this.killAll(); // kill any existing forks
@@ -118,7 +118,7 @@ Forq.prototype.run = function () {
     }
   });
 
-  this.workers.forEach(function(w){
+  this.todo.forEach(function(w){
     var t = new Task(w, self);
     self.addTask(t);
   });
