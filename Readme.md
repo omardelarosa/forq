@@ -136,7 +136,7 @@ var queue = new Forq({
 queue.run();
 ```
 
-###Callbacks
+### Callbacks
 You may also set an optional callback to fire when the fork queue has been notified that all task forks have terminated:
 
 ```javascript
@@ -153,10 +153,10 @@ var queue = new Forq({
 ```
 This callback fires when all tasks have been completed.
 
-##Events
+## Events
 Communication with each fork can be done through events.
 
-###Binding
+### Binding
 These events can be bound on the ``events`` key on queue initialization.
 
 ```javascript
@@ -177,7 +177,7 @@ var queue = new Forq({
 });
 ```
 
-###Default Events
+### Default Events
 By default, tasks and queues emit a variety of events:
 
 #### Queue Events
@@ -195,7 +195,7 @@ By default, tasks and queues emit a variety of events:
 ``error``    |  -> ( err )                | see the errors.js module for different error types
 
 
-###Custom Events
+### Custom Events
 Each custom event can be fired from within a task child process by passing an object with ``data`` and ``event`` keys to the ``process.send`` method:
 ```javascript
 // my_task_worker.js
@@ -204,7 +204,7 @@ process.send({ event: 'myCustomEvent', data: { hello: 'world', temp: 100 }});
 ```
 Each event's ``this`` is bound to the ``Process`` instance that triggered it.  The ```data`` object is then sent to the event handler as the first argument and accessible in its scope.
 
-##Sharing Data Among Tasks In a Queue
+## Sharing Data Among Tasks In a Queue
 Tasks can share data by attaching it to the ``queue``.  For example:
 ```javascript
 // initialize the queue
@@ -235,8 +235,8 @@ var queue = new Forq({
 queue.run();
 ```
 
-##Errors
-###Fork-Halting Errors
+## Errors
+### Fork-Halting Errors
 Errors will be logged in the respective stderr of their task's fork and emit an 'error' event to the queue.   Errors can be listened for on the queue level:
 
 ```javascript
@@ -283,11 +283,11 @@ Each queue has an array of arrays called ``.errors`` containing errors raised by
 
 The Forq module includes a few Error constructors that can be used for 
 
-##Timeouts
+## Timeouts
 
 Both tasks and queues can have timeouts set ``killTimeout`` attribute upon their initialization.  There is also a ``pollFrequency`` value which can be used to adjust how often the main process checks for timeouts
 
-###Pool Timeout
+### Queue Timeout
 ```javascript
 var queue = new Forq({
   todo: tasks,
@@ -298,7 +298,7 @@ var queue = new Forq({
   pollFrequency: 1000
 });
 ```
-###Worker Timeout
+### Task Timeout
 ```javascript
 var tasks = []
 tasks.push({
@@ -312,21 +312,21 @@ tasks.push({
 });
 ```
 
-#Changelog
+# Changelog
 
-##0.0.2
+## 0.0.2
 - Now using native Node Domain for worker pool management
 - Improved Error handling
 - Added Worker Error namespacing support
 
-##0.0.3
+## 0.0.3
 - Added monitoring for active forks and handling for stale/hanging forks.
 - Added killTimeout options for pools and forks
 - Added 'onfinished' option to use in place of queue.drain
 
-##0.0.4
+## 0.0.4
 - Readme updates and minor improvements to index.js
 
-##0.0.7
+## 0.0.7
 - Added noLimit mode that ignores concurrency limit
 - Changed 'worker' to 'tasks' and 'pool' to 'queue' throughout
