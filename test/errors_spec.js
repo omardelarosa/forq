@@ -38,8 +38,10 @@ describe('Error Handling', function(){
       concurrency: 10,
       onfinished: function () {
           var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
-          expect(errors.length, 'number of forks with errors').to.eq(2);
-          done();
+          try {
+            expect(errors.length, 'number of forks with errors').to.eq(2);
+            done();
+          } catch (e) { done(e); }
         }
       });
       pool.run();
@@ -54,10 +56,12 @@ describe('Error Handling', function(){
         concurrency: 10,
         onfinished: function () {
           var errors = _.filter(pool.errors, function(err) { return err.length > 0; });
-          expect(errors.length, 'number of forks with errors').to.eq(2);
-          expect(poolErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
-          expect(poolErrors.filter(function(e){ return e.constructor === ForkError; }), 'ForkErrors').to.have.length(1);
-          done();
+          try {
+            expect(errors.length, 'number of forks with errors').to.eq(2);
+            expect(poolErrors.filter(function(e){ return e.constructor === SoftError; }), 'SoftErrors').to.have.length(1);
+            expect(poolErrors.filter(function(e){ return e.constructor === ForkError; }), 'ForkErrors').to.have.length(1);
+            done();
+          } catch (e) { done(e); }
         },
         events: {
           softError: function() {
@@ -126,8 +130,10 @@ describe('Error Handling', function(){
       pool.run();
 
       pool.on('workerError:important_error_prone_worker', function(err){
-        expect(err, 'an important error').to.be.an.instanceOf(ForkError);
-        done();
+        try {
+          expect(err, 'an important error').to.be.an.instanceOf(ForkError);
+          done();
+        } catch (e) { done(e); }
       });
 
     });
@@ -138,7 +144,7 @@ describe('Error Handling', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 300;
+    var bufferTime = 1000;
     this.timeout(30000);
 
     before(function(){
@@ -169,8 +175,10 @@ describe('Error Handling', function(){
         events: {
           "terminated": function () {
             end = Date.now();
-            expect(end-start).to.be.lt(killTimeout+bufferTime);
-            done();
+            try {
+              expect(end-start).to.be.lt(killTimeout+bufferTime);
+              done();
+            } catch (e) { done(e); }
           }
         }
       });
@@ -185,7 +193,7 @@ describe('Error Handling', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 300;
+    var bufferTime = 1000;
     this.timeout(30000);
 
     before(function(){
@@ -213,8 +221,10 @@ describe('Error Handling', function(){
         concurrency: 10,
         onfinished: function () {
           end = Date.now();
-          expect(end-start).to.be.lt(killTimeout+bufferTime);
-          done();
+          try {
+            expect(end-start).to.be.lt(killTimeout+bufferTime);
+            done();
+          } catch (e) { done(e); }
         },
         killTimeout: killTimeout
       });

@@ -33,8 +33,10 @@ describe('Forq Worker Pools', function(){
       pool = new Forq({
         workers: workers,
         onfinished: function() {
-          expect(this.forks.filter(function(f){ return !f.terminated; }), 'unfinished tasks array').to.have.length(0);
-          done();
+          try {
+            expect(this.forks.filter(function(f){ return !f.terminated; }), 'unfinished tasks array').to.have.length(0);
+            done();
+          } catch (e) { done(e); }
         }
       });
 
@@ -79,8 +81,10 @@ describe('Forq Worker Pools', function(){
       var pool = new Forq({
         workers: workers,
         onfinished: function () {
-          expect(pool.forks.length, 'number of forks').to.eq(10);
-          done();
+          try {
+            expect(pool.forks.length, 'number of forks').to.eq(10);
+            done();
+          } catch (e) { done(e); }
         },
         events: {
           myCustomEvent: function(){
@@ -151,8 +155,10 @@ describe('Forq Worker Pools', function(){
         workers: workers,
         concurrency: (NUM_CPUS*2),
         onfinished: function () {
-          expect(pool.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
-          done();
+          try {
+            expect(pool.concurrencyLimit, 'concurrency limit').to.eq(NUM_CPUS);
+            done();
+          } catch (e) { done(e); }
         }
       });
 

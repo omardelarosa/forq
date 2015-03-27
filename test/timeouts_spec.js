@@ -15,7 +15,7 @@ describe('Timeouts', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 300;
+    var bufferTime = 1000;
     this.timeout(60000);
 
     before(function(){
@@ -46,9 +46,11 @@ describe('Timeouts', function(){
         events: {
           "terminated": function () {
             end = Date.now();
-            expect(end-start).to.be.lt(killTimeout+bufferTime);
-            done();
-          }
+            try {
+              expect(end-start).to.be.lt(killTimeout+bufferTime);
+              done();
+            } catch (e) { done(e); }
+           }
         }
       });
 
@@ -62,7 +64,7 @@ describe('Timeouts', function(){
 
     var workers = [];
     var killTimeout = 5000;
-    var bufferTime = 300;
+    var bufferTime = 1000;
     this.timeout(60000);
 
     before(function(){
@@ -90,8 +92,10 @@ describe('Timeouts', function(){
         concurrency: 10,
         onfinished: function () {
           end = Date.now();
-          expect(end-start).to.be.lt(killTimeout+bufferTime);
-          done();
+          try {
+            expect(end-start).to.be.lt(killTimeout+bufferTime);
+            done();
+          } catch (e) { done(e); }
         },
         killTimeout: killTimeout
       });
