@@ -1,12 +1,13 @@
 # Forq
+
+Manage process forks using a task queue
+
 ## Build Status
 Branch  | Build Status | Version
 ------- | ------------ | ----
  master | [![build status](https://travis-ci.org/omardelarosa/forq.png?branch=master)](https://travis-ci.org/omardelarosa/forq?branch=master)  |  [![npm version](https://img.shields.io/npm/v/forq.svg)](https://img.shields.io/npm/v/forq.svg)
  development | [![build status](https://travis-ci.org/omardelarosa/forq.png?branch=development)](https://travis-ci.org/omardelarosa/forq?branch=development) | 0.0.7
 
-
-Manage forked processes using [Node](http://nodejs.org/) and [Async.js](https://github.com/caolan/async)
 
 ## Installation
 ```bash
@@ -20,8 +21,8 @@ Require the 'forq' module at the top of your file:
 var Forq = require('forq');
 ```
 
-###Worker
-Set up a node module to be your worker For example, './slow_printer' is a node module that would console log after 500ms and look like this:
+### Task
+Set up a node module to be your task worker For example, './slow_printer' is a node module that would console log after 500ms and look like this:
 
 ```javascript
 // slow_printer.js
@@ -32,20 +33,20 @@ setTimeout(function(){
 ```
 
 ###Pool
-Setup an array of workers that reference one or more node module:
+Setup an array of tasks that reference one or more node module:
 
 ```javascript
-// make workers
-var workers = [];
+// make tasks
+var tasks = [];
 
-workers.push({
+tasks.push({
   path: './slow_printer',
   // you can specify arguments as an array here
   args: [ '-f', 'yo' ],
   description: 'task #1'
 });
 
-workers.push({
+tasks.push({
   path: './fast_printer',
   // you can specify arguments as an array here
   args: [ '-f', 'blah'],
@@ -54,27 +55,27 @@ workers.push({
 
 ```
 
-###Initialization
-Initialize your new worker pool with the array of workers
+### Initialization
+Initialize your new fork queue with the array of tasks
 
 ```javascript
-// initialize new pool
-var pool = new Forq({
-  workers: workers,
+// initialize new task queue
+var queue = new Forq({
+  tasks: tasks,
   // set your desired concurrency
   concurrency: 4
 });
 ```
 
-###Running
-Run all the workers in the array passed into your worker pool:
+### Start processing the queue
+Start all the tasks in the array passed into your fork queue using ``.run``:
 
 ```javascript
-pool.run();
+queue.run();
 ```
 
 ###Tasks
-After a worker pool has been initialized, additional work can be added as a ``Task``.  To use a task, first require the ``Task`` constructor:
+After a task queue has been initialized, additional work can be added as a ``Task``.  To use a task, first require the ``Task`` constructor:
 
 ```javascript
 var Task = require('fork/task');
@@ -82,15 +83,15 @@ var Task = require('fork/task');
 Then just use the ``.addTask`` method to add it to the worker pool
 
 ```javascript
-var pool = new Forq({
-  workers: workers,
+var queue = new Forq({
+  tasks: tasks,
   onfinished: function () {
     
     // waiting to add another task
     setTimeout(function(){
     
       // adding another task
-      pool.addTask(new Task({
+      queue.addTask(new Task({
         path: './test/printer',
         description: 'a later task'
       }, pool ));
@@ -100,24 +101,27 @@ var pool = new Forq({
   }
 });
 
-pool.run();
+queue.run();
 ```
 
 Tasks also accept callbacks:
 
 ```javascript
-var pool = new Forq({
-  workers: workers,
+var queue = new Forq({
+  tasks: tasks,
   onfinished: function () {
     
     // waiting to add another task
     setTimeout(function(){
     
       // adding another task
-      pool.addTask(new Task({
+      queue.addTask(new Task({
         path: './test/printer',
         description: 'a later task'
-      }, pool, 
+      }, 
+
+      // pass in a queue as a second argument (can be a different queue)
+      queue, 
 
       // this is a callback that fires when the task has been processed
       function (err) {
@@ -129,16 +133,16 @@ var pool = new Forq({
   }
 });
 
-pool.run();
+queue.run();
 ```
 
 ###Callbacks
-You may also set an optional callback to fire when the pool has been notified that all worker forks have terminated:
+You may also set an optional callback to fire when the fork queue has been notified that all worker forks have terminated:
 
 ```javascript
-// initialize new pool
-var pool = new Forq({
-  workers: workers,
+// initialize new queue
+var queue = new Forq({
+  tasks: tasks,
   // set your desired concurrency
   concurrency: 4,
   // optional callback
@@ -147,19 +151,19 @@ var pool = new Forq({
   };
 });
 ```
-This call back fires when all forks have terminated.
+This callback fires when all tasks have been completed.
 
 ##Events
 Communication with each fork can be done through events.
 
 ###Binding
-These events can be bound on the ``events`` key on pool initialization.
+These events can be bound on the ``events`` key on queue initialization.
 
 ```javascript
-var pool = new Forq({
-  workers: workers,
+var queue = new Forq({
+  tasks: tasks,
   onfinished: function () {
-   // stuff to do when worker pool finishes all tasks and there are no active forks
+   // stuff to do when the task queue finishes all tasks and there are no active processes/tasks
   },
   // worker events to listen for and react to
   events: {
@@ -174,17 +178,17 @@ var pool = new Forq({
 ```
 
 ###Default Events
-By default, workers and pools emit a variety of events:
+By default, tasks and queues emit a variety of events:
 
-####Pool Events
+#### Queue Events
  Event Name  | Parameters Sent to Handler |  Notes
 -----------  | -------------------------- | --------
 ``finished`` |  -> ( { status:  '...' } ) | possible statuses: 'completed', 'aborted'
 ``error``    |  -> ( err )                | see the errors.js module for different error types
-``workerError``| -> (err)                 | when any worker fires an error
-``workerError:{idOfWorker}`` | -> (err) | when an specific worker with specified id fires an error
+``taskError``| -> (err)                 | when any worker fires an error
+``taskError:{idOfTask}`` | -> (err) | when an specific task with specified id fires an error
 
-####Worker Events
+#### Task Events
  Event Name  | Parameters Sent to Handler |  Notes
 -----------  | -------------------------- | --------
 ``finished`` |  -> ( {} )                 | empty object
@@ -192,20 +196,20 @@ By default, workers and pools emit a variety of events:
 
 
 ###Custom Events
-Each custom event can be fired from within a worker child process by passing an object with ``data`` and ``event`` keys to the ``process.send`` method:
+Each custom event can be fired from within a task child process by passing an object with ``data`` and ``event`` keys to the ``process.send`` method:
 ```javascript
-// my_worker.js
+// my_task_worker.js
 
 process.send({ event: 'myCustomEvent', data: { hello: 'world', temp: 100 }});
 ```
 Each event's ``this`` is bound to the ``Process`` instance that triggered it.  The ```data`` object is then sent to the event handler as the first argument and accessible in its scope.
 
-##Sharing Data Among Workers In a Pool
-Workers can share data by attaching it to the ``pool``.  For example:
+##Sharing Data Among Tasks In a Queue
+Tasks can share data by attaching it to the ``queue``.  For example:
 ```javascript
 // initialize the worker pool
-var pool = new Forq({
-  workers: workers,
+var queue = new Forq({
+  tasks: tasks,
   onfinished: function () {
     // check updated values
     console.log(this.__data.tempCounter);
@@ -221,59 +225,59 @@ var pool = new Forq({
     myCustomEvent: function(data){
       // update the data containers or increment their values
       var statuses = [ 'fine', 'cool', 'hungry', 'bored'];
-      this.pool.__data.tempCounter += data.temp;
-      this.pool.__data.statuses.push(_.sample(statuses));
+      this.queue.__data.tempCounter += data.temp;
+      this.queue.__data.statuses.push(_.sample(statuses));
     }
   }
 });
 
-// start processing the tasks in the worker pool
-pool.run();
+// start processing the tasks in the queue
+queue.run();
 ```
 
 ##Errors
 ###Fork-Halting Errors
-Errors will be logged in the respective stderr of their fork and emit an 'error' event to the worker pool.   Errors can be listened for on the pool level:
+Errors will be logged in the respective stderr of their task's fork and emit an 'error' event to the queue.   Errors can be listened for on the queue level:
 
 ```javascript
-pool.on('error', function(err){
+queue.on('error', function(err){
   // handle the error somehow
 });
 ```
 
-Or they can be listened for on the workers themselves using the following namespace:
+Or they can be listened for on the tasks themselves using the following namespace:
 ```javascript
-var workers = [
+var tasks = [
   {
     path: './worker_module',
-    description: 'worker b',
-    // set the worker name here
-    id: 'worker_a'
+    description: 'task b',
+    // set the task name here
+    id: 'task_a'
   },
   path: './worker_module',
-    description: 'worker a',
-    // set the worker name here
-    id: 'worker_b'
+    description: 'task a',
+    // set the task name here
+    id: 'task_b'
   }
 ];
 
-var pool = new Forq({
-  workers: workers,
+var queue = new Forq({
+  tasks: tasks,
   concurrency: 10,
   onfinish: function () {
     // all done!
   }
 });
 
-pool.on('workerError:worker_a', function(err){
-  // handle the error for just worker1 somehow
+queue.on('taskError:task_a', function(err){
+  // handle the error for just task_a somehow
 });
 ```
 
 
 ``.errors``
 
-Each worker pool has an array of arrays called ``.errors`` containing errors raised by their respective worker's forks.
+Each queue has an array of arrays called ``.errors`` containing errors raised by their respective tasks and their forks.
 
 ``Forq.Errors``
 
@@ -281,12 +285,12 @@ The Forq module includes a few Error constructors that can be used for
 
 ##Timeouts
 
-Both workers and worker pools can have timeouts set ``killTimeout`` attribute upon their initialization.  There is also a ``pollFrequency`` value which can be used to adjust how often the main process checks for timeouts
+Both tasks and queues can have timeouts set ``killTimeout`` attribute upon their initialization.  There is also a ``pollFrequency`` value which can be used to adjust how often the main process checks for timeouts
 
 ###Pool Timeout
 ```javascript
-var pool = new Forq({
-  workers: workers,
+var queue = new Forq({
+  tasks: tasks,
   concurrency: 10,
   // set a 10 second timeout for the pool
   killTimeout: 10000,
@@ -296,11 +300,11 @@ var pool = new Forq({
 ```
 ###Worker Timeout
 ```javascript
-var workers = []
-workers.push({
+var tasks = []
+tasks.push({
   path: './test/slow_worker',
   args: [ ],
-  id: 'slow_worker',
+  id: 'slow_task',
   // a 10 second timeout on the worker
   killTimeout: 10000,
     // poll frequency of 1 second
@@ -322,3 +326,7 @@ workers.push({
 
 ##0.0.4
 - Readme updates and minor improvements to index.js
+
+##0.0.7
+- Added noLimit mode that ignores concurrency limit
+- Changed 'worker' to 'tasks' and 'pool' to 'queue' throughout

@@ -41,7 +41,7 @@ function Forq (opts) {
   var q = async.queue(function(task, done){
     task.action(done);
   }, this.concurrencyLimit); // make queue;
-  this.queue = q; // attach queue to pool
+  this.__queue = q; // attach async queue to forq queue
   this.errors = {};
   this.forksHash = {};
   this.forks = [];
@@ -49,7 +49,7 @@ function Forq (opts) {
   this.tasks = [];
   // start pool timer
   this.__setPoolTimer();
-  this.queue.drain = (function(res) {
+  this.__queue.drain = (function(res) {
     debug("finished all tasks and calling drain");
     if (this.opts.drain && this.opts.drain.constructor === Function) {
       this.opts.drain.call(this, pool);
@@ -77,9 +77,9 @@ Forq.prototype.__setPoolTimer = function () {
     debug('total tasks in pool', self.tasks.length);
     debug('total forks in pool', self.forks.length);
     debug('total pending task', self.getNumberOfPendingTasks() );
-    debug('pool queue idle? ', self.queue.idle() );
+    debug('pool queue idle? ', self.__queue.idle() );
     debug('currently active forks in pool', self.getNumberOfActiveForks() );
-    if (self.queue.idle() && self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
+    if (self.__queue.idle() && self.getNumberOfPendingTasks() === 0 && self.getNumberOfActiveForks() === 0) {
       clearInterval(self.timer);
       self.emit('finished', { status: 'completed' });
     } else if (currentTime - self.startTime > self.killTimeout) {
@@ -130,7 +130,7 @@ Forq.prototype.run = function () {
 
 Forq.prototype.addTask = function(t, cb) {
   this.tasks.push(t);
-  this.queue.push({
+  this.__queue.push({
     action: t.fn.bind(this)
   }, function(err){
     // log errors processing forks

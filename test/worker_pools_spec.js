@@ -47,7 +47,7 @@ describe('Forq Worker Pools', function(){
     it('running the pool again clears prior forks', function (done) {
 
       // redefine drain function from what was initialized
-      pool.queue.drain = function() {
+      pool.__queue.drain = function() {
         try {
           expect(pool.forks.length, 'number of forks').to.eq(10);
           done();
